@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "FinalProjectRina.Server/1.0.0": {
+        "runtime": {
+          "FinalProjectRina.Server.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FinalProjectRina.Server/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
