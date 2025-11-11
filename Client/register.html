@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>AI Robot Assistant • Register</title>
+	<link rel="stylesheet" href="./styles.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+	<div class="auth-shell">
+			<section class="auth-panel auth-hero">
+				<div class="robot-icon">🤖</div>
+				<h1>Create your secure workspace</h1>
+				<p>Get instant access to voice + text conversations, synced across every device with enterprise-grade privacy.</p>
+
+				<div class="auth-badges">
+					<span class="auth-badge">SSO-ready</span>
+					<span class="auth-badge">Voice-first</span>
+					<span class="auth-badge">Enterprise</span>
+				</div>
+
+				<ul class="auth-benefits">
+					<li>Invite teammates and share chat transcripts</li>
+					<li>Use natural speech with automatic transcripts</li>
+					<li>Keep data private with zero third‑party tracking</li>
+				</ul>
+			</section>
+
+		<section class="auth-panel auth-card">
+			<div class="auth-header">
+				<h2 class="auth-title">Request access</h2>
+				<p class="auth-subtitle" id="registerSubtitle">Tell us about yourself to get started.</p>
+			</div>
+
+			<div class="auth-scroll">
+				<form id="registerForm" class="auth-form">
+					<div class="auth-field">
+						<label for="regName">Full name</label>
+						<input type="text" id="regName" class="message-input" placeholder="Grace Hopper" required>
+					</div>
+
+					<div class="auth-field">
+						<label for="regEmail">Work email</label>
+						<input type="email" id="regEmail" class="message-input" placeholder="grace@company.com" required>
+					</div>
+
+					<div class="auth-field">
+						<label for="regOrg">Company / team</label>
+						<input type="text" id="regOrg" class="message-input" placeholder="Neptune Robotics" required>
+					</div>
+
+					<div class="auth-field">
+						<label for="regPassword">Password</label>
+						<input type="password" id="regPassword" class="message-input" placeholder="Create a strong password" minlength="6" required>
+					</div>
+
+					<div class="auth-field">
+						<label for="regConfirm">Confirm password</label>
+						<input type="password" id="regConfirm" class="message-input" placeholder="Repeat your password" minlength="6" required>
+					</div>
+
+					<button type="submit" class="primary-btn">Create account</button>
+				</form>
+
+				<div class="auth-status" id="registerStatus"></div>
+
+				<div class="auth-links">
+					<span>Already have access? <a class="link-btn" href="login.html">Back to login</a></span>
+				</div>
+			</div>
+		</section>
+	</div>
+
+		<script>
+			(function () {
+				const form = document.getElementById('registerForm');
+				const statusEl = document.getElementById('registerStatus');
+				const subtitle = document.getElementById('registerSubtitle');
+
+				function setStatus(msg, timeout = 0) {
+					statusEl.textContent = msg;
+					if (timeout) {
+						setTimeout(() => statusEl.textContent = '', timeout);
+					}
+				}
+
+				const existingUser = localStorage.getItem('chatUser');
+				if (existingUser) {
+					setStatus('You are currently logged in. Submitting will update your profile.');
+				}
+
+				form.addEventListener('submit', (event) => {
+					event.preventDefault();
+					const name = document.getElementById('regName').value.trim();
+					const email = document.getElementById('regEmail').value.trim();
+					const org = document.getElementById('regOrg').value.trim();
+					const password = document.getElementById('regPassword').value;
+					const confirm = document.getElementById('regConfirm').value;
+
+					if (password !== confirm) {
+						setStatus('Passwords do not match.', 1800);
+						return;
+					}
+
+					const user = {
+						name,
+						email,
+						org,
+						createdAt: new Date().toISOString(),
+					};
+
+					localStorage.setItem('chatUser', JSON.stringify(user));
+					setStatus('Account created! Redirecting to chat...');
+					setTimeout(() => {
+						window.location.href = 'index.html';
+					}, 900);
+				});
+			})();
+		</script>
+	</body>
+	</html>

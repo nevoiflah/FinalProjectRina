@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>AI Robot Assistant • Login</title>
+	<link rel="stylesheet" href="./styles.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+	<div class="auth-shell">
+		<section class="auth-panel auth-hero">
+			<div class="robot-icon">🤖</div>
+			<h1>AI Robot Assistant</h1>
+			<p>Create natural conversations with voice or text, keep transcripts synced, and let the bot speak back instantly.</p>
+
+			<div class="auth-badges">
+				<span class="auth-badge">Secure</span>
+				<span class="auth-badge">Voice + Text</span>
+				<span class="auth-badge">24/7 Availability</span>
+			</div>
+
+			<ul class="auth-benefits">
+				<li>Seamless speech-to-text and text-to-speech loops</li>
+				<li>Cloud-synced conversations across devices</li>
+				<li>Smart assistant that remembers recent context</li>
+			</ul>
+		</section>
+
+		<section class="auth-panel auth-card">
+			<div class="auth-header">
+				<h2 class="auth-title">Welcome back</h2>
+				<p class="auth-subtitle">Log in to continue your session</p>
+			</div>
+
+			<form id="loginForm" class="auth-form">
+				<div class="auth-field">
+					<label for="fullName">Full name</label>
+					<input type="text" id="fullName" class="message-input" placeholder="Ada Lovelace" required>
+				</div>
+
+				<div class="auth-field">
+					<label for="email">Email address</label>
+					<input type="email" id="email" class="message-input" placeholder="ada@example.com" required>
+				</div>
+
+				<div class="auth-field">
+					<label for="password">Password</label>
+					<input type="password" id="password" class="message-input" placeholder="Enter your password" required>
+				</div>
+
+				<button type="submit" class="primary-btn">Log in</button>
+			</form>
+
+			<div class="auth-status" id="loginStatus"></div>
+
+			<div class="auth-links">
+				<span>Don't have an account? <a class="link-btn" href="register.html">Request access</a></span>
+			</div>
+		</section>
+	</div>
+
+	<script>
+		(function () {
+			const form = document.getElementById('loginForm');
+			const statusEl = document.getElementById('loginStatus');
+
+			function setStatus(message, delay = 0) {
+				statusEl.textContent = message;
+				if (delay) {
+					setTimeout(() => statusEl.textContent = '', delay);
+				}
+			}
+
+			function redirectToChat() {
+				window.location.href = 'index.html';
+			}
+
+			if (localStorage.getItem('chatUser')) {
+				setStatus('You are already logged in. Redirecting...');
+				setTimeout(redirectToChat, 800);
+			}
+
+			form.addEventListener('submit', (event) => {
+				event.preventDefault();
+				const name = document.getElementById('fullName').value.trim();
+				const email = document.getElementById('email').value.trim();
+
+				if (!name || !email) {
+					setStatus('Please fill in all fields.', 1500);
+					return;
+				}
+
+				const user = {
+					name,
+					email,
+					loginAt: new Date().toISOString(),
+				};
+
+				localStorage.setItem('chatUser', JSON.stringify(user));
+				setStatus('Login successful! Redirecting...');
+				setTimeout(redirectToChat, 900);
+			});
+		})();
+	</script>
+</body>
+</html>

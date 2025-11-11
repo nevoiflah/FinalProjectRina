@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>AI Robot Chat</title>
+	<link rel="stylesheet" href="./styles.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+	<!-- Start Screen -->
+	<div id="startScreen" class="screen">
+		<div class="center-content">
+			<div class="robot-icon">🤖</div>
+			<h1 class="main-title">AI Robot Assistant</h1>
+			<p class="main-subtitle">Your intelligent conversational companion</p>
+			<button id="startChatBtn" class="primary-btn">Start Chat</button>
+		</div>
+	</div>
+
+	<!-- Chat Screen -->
+	<div id="chatScreen" class="screen hidden">
+		<div class="chat-container">
+			<header class="chat-header">
+				<button id="backBtn" class="back-btn">←</button>
+				<div class="header-center">
+					<div class="bot-avatar">🤖</div>
+					<div>
+						<div class="bot-name">AI Assistant</div>
+						<div class="bot-status">Online</div>
+					</div>
+				</div>
+				<div class="header-spacer"></div>
+			</header>
+
+			<main class="chat-messages" id="chatMessages">
+				<div class="message bot-message">
+					<div class="message-avatar">🤖</div>
+					<div class="message-content">
+						Hello! I'm your AI assistant. Type a message or use the microphone button to speak with me. How can I help you today?
+					</div>
+				</div>
+			</main>
+
+			<footer class="chat-input-area">
+				<div class="input-wrapper">
+					<button id="micBtn" class="mic-btn" title="Record voice message">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+							<path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+						</svg>
+					</button>
+					<input 
+						type="text" 
+						id="messageInput" 
+						class="message-input" 
+						placeholder="Type your message..."
+					/>
+					<button id="sendBtn" class="send-btn" title="Send message">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="22" y1="2" x2="11" y2="13"></line>
+							<polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+						</svg>
+					</button>
+				</div>
+				<div id="recordingIndicator" class="recording-indicator hidden">
+					<div class="recording-dot"></div>
+					<span>Recording... Tap mic to stop</span>
+				</div>
+			</footer>
+		</div>
+	</div>
+
+		<audio id="ttsAudio" preload="auto"></audio>
+
+		<script>
+			(function () {
+				const user = localStorage.getItem('chatUser');
+				if (!user) {
+					window.location.replace('login.html');
+				}
+			})();
+		</script>
+		<script src="./api.js"></script>
+		<script src="./script.js"></script>
+		<script src="./app.js"></script>
+	</body>
+	</html>
