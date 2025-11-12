@@ -36,12 +36,7 @@
 			</header>
 
 			<main class="chat-messages" id="chatMessages">
-				<div class="message bot-message">
-					<div class="message-avatar">🤖</div>
-					<div class="message-content">
-						Hello! I'm your AI assistant. Type a message or use the microphone button to speak with me. How can I help you today?
-					</div>
-				</div>
+				<!-- Messages will be added dynamically -->
 			</main>
 
 			<footer class="chat-input-area">
@@ -73,18 +68,18 @@
 		</div>
 	</div>
 
-		<audio id="ttsAudio" preload="auto"></audio>
+	<audio id="ttsAudio" preload="auto"></audio>
 
-		<script>
-			(function () {
-				const user = localStorage.getItem('chatUser');
-				if (!user) {
-					window.location.replace('login.html');
-				}
-			})();
-		</script>
-		<script src="./api.js"></script>
-		<script src="./script.js"></script>
-		<script src="./app.js"></script>
-	</body>
-	</html>
+	<script>
+		(function () {
+			const user = localStorage.getItem('chatUser');
+			if (!user) {
+				window.location.replace('login.html');
+			}
+		})();
+	</script>
+	<script src="./api.js"></script>
+	<script src="./script.js"></script>
+	<script src="./app.js"></script>
+</body>
+</html>
