@@ -32,76 +32,118 @@
 		<section class="auth-panel auth-card">
 			<div class="auth-header">
 				<h2 class="auth-title">Welcome back</h2>
-				<p class="auth-subtitle">Log in to continue your session</p>
+				<p class="auth-subtitle">Sign in to continue your session</p>
 			</div>
 
 			<form id="loginForm" class="auth-form">
 				<div class="auth-field">
-					<label for="fullName">Full name</label>
-					<input type="text" id="fullName" class="message-input" placeholder="Ada Lovelace" required>
-				</div>
-
-				<div class="auth-field">
 					<label for="email">Email address</label>
-					<input type="email" id="email" class="message-input" placeholder="ada@example.com" required>
+					<input type="email" id="email" class="message-input" placeholder="ada@example.com" autocomplete="email" required>
 				</div>
 
 				<div class="auth-field">
 					<label for="password">Password</label>
-					<input type="password" id="password" class="message-input" placeholder="Enter your password" required>
+					<input type="password" id="password" class="message-input" placeholder="Enter your password" autocomplete="current-password" required>
 				</div>
 
-				<button type="submit" class="primary-btn">Log in</button>
+				<button type="submit" class="primary-btn">Sign in</button>
 			</form>
 
 			<div class="auth-status" id="loginStatus"></div>
-
+			
 			<div class="auth-links">
-				<span>Don't have an account? <a class="link-btn" href="register.html">Request access</a></span>
+				<span>Don't have an account? <a class="link-btn" href="register.html">Create account</a></span>
 			</div>
 		</section>
 	</div>
 
+	<script src="./config.js"></script>
 	<script>
 		(function () {
+			const ChatConfig = window.ChatConfig;
 			const form = document.getElementById('loginForm');
 			const statusEl = document.getElementById('loginStatus');
+			const submitBtn = form.querySelector('button[type="submit"]');
 
-			function setStatus(message, delay = 0) {
+			function setStatus(message, isError = false) {
 				statusEl.textContent = message;
-				if (delay) {
-					setTimeout(() => statusEl.textContent = '', delay);
-				}
+				statusEl.style.color = isError ? '#ff6b6b' : 'var(--text-light)';
 			}
 
 			function redirectToChat() {
 				window.location.href = 'index.html';
 			}
 
+			function getApiBase() {
+				const base = ChatConfig?.getApiBase() || '';
+				// Default to localhost if not configured
+				return base || 'http://localhost:5000';
+			}
+
+			// Check if already logged in
 			if (localStorage.getItem('chatUser')) {
 				setStatus('You are already logged in. Redirecting...');
 				setTimeout(redirectToChat, 800);
+				return;
 			}
 
-			form.addEventListener('submit', (event) => {
-				event.preventDefault();
-				const name = document.getElementById('fullName').value.trim();
-				const email = document.getElementById('email').value.trim();
+			async function login(payload) {
+				const apiBase = getApiBase();
+				const response = await fetch(`${apiBase}/api/user/login`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				
+				const data = await response.json().catch(() => ({}));
+				
+				if (!response.ok) {
+					if (response.status === 405 || response.status === 404) {
+						throw new Error('Cannot connect to server. Please check if the server is running.');
+					}
+					if (response.status === 401) {
+						throw new Error('Invalid email or password.');
+					}
+					throw new Error(data?.error || 'Login failed. Please try again.');
+				}
+				return data;
+			}
 
-				if (!name || !email) {
-					setStatus('Please fill in all fields.', 1500);
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				
+				const email = document.getElementById('email').value.trim();
+				const password = document.getElementById('password').value;
+
+				// Validation
+				if (!email || !password) {
+					setStatus('Please enter your email and password.', true);
 					return;
 				}
 
-				const user = {
-					name,
-					email,
-					loginAt: new Date().toISOString(),
-				};
+				// Email validation
+				const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+				if (!emailRegex.test(email)) {
+					setStatus('Please enter a valid email address.', true);
+					return;
+				}
 
-				localStorage.setItem('chatUser', JSON.stringify(user));
-				setStatus('Login successful! Redirecting...');
-				setTimeout(redirectToChat, 900);
+				submitBtn.disabled = true;
+				setStatus('Authenticating...');
+
+				try {
+					const user = await login({ email, password });
+					
+					// Store user data in localStorage
+					localStorage.setItem('chatUser', JSON.stringify(user));
+					
+					setStatus('Login successful! Redirecting...');
+					setTimeout(redirectToChat, 1000);
+				} catch (err) {
+					setStatus(err.message || 'Login failed. Please try again.', true);
+				} finally {
+					submitBtn.disabled = false;
+				}
 			});
 		})();
 	</script>

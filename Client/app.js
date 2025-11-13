@@ -7,6 +7,12 @@
 			this.refs = this.cacheElements();
 			if (!this.refs) return;
 
+			this.currentUser = this.loadCurrentUser();
+			if (!this.currentUser) {
+				this.redirectToLogin();
+				return;
+			}
+
 			this.voiceController = this.createVoiceController();
 			this.bindEvents();
 			this.resetConversation();
@@ -65,7 +71,34 @@
 			}
 		}
 
+		loadCurrentUser() {
+			const raw = localStorage.getItem('chatUser');
+			if (!raw) return null;
+			try {
+				const parsed = JSON.parse(raw);
+				return parsed && (parsed.userId || parsed.UserId) ? parsed : null;
+			} catch {
+				return null;
+			}
+		}
+
+		redirectToLogin(message) {
+			if (message) {
+				alert(message);
+			}
+			window.location.replace('login.html');
+		}
+
+		ensureAuthenticated() {
+			if (this.currentUser && (this.currentUser.userId || this.currentUser.UserId)) {
+				return true;
+			}
+			this.redirectToLogin('Your session has expired. Please log in again.');
+			return false;
+		}
+
 		startChat() {
+			if (!this.ensureAuthenticated()) return;
 			const { startScreen, chatScreen, messageInput } = this.refs;
 			startScreen.classList.add('fade-out');
 			setTimeout(() => {
@@ -109,6 +142,7 @@
 		}
 
 		async processOutgoingMessage(text) {
+			if (!this.ensureAuthenticated()) return;
 			this.addMessage(text, 'user');
 			this.showTypingIndicator();
 			this.refs.sendBtn.disabled = true;
@@ -148,6 +182,10 @@
 
 		async tryPlayTts(text) {
 			if (!text || !this.refs.ttsAudio) return;
+			if (window.BotAPI?.mode === 'mock') {
+				// Skip the placeholder tone when mock APIs are enabled.
+				return;
+			}
 			try {
 				const audioBlob = await window.BotAPI.tts(text);
 				const url = URL.createObjectURL(audioBlob);

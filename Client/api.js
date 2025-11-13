@@ -1,12 +1,13 @@
 (function () {
 	/**
-	 * api.js — browser-friendly API bridge that mirrors the UI in index.html.
+	 * api.js – browser-friendly API bridge that mirrors the UI in index.html.
 	 * It exposes a single global `BotAPI` object so regular <script> tags
 	 * (no modules) can access chat/STT/TTS helpers.
 	 */
 
-	const USE_MOCK_API = window.__USE_MOCK_API__ ?? true;
-	const API_BASE = window.__CHAT_API_BASE__ || '';
+	// IMPORTANT: Set to false to use real backend API with database
+	const USE_MOCK_API = window.__USE_MOCK_API__ ?? false;
+	const getApiBase = () => window.ChatConfig?.getApiBase() || window.__CHAT_API_BASE__ || 'http://localhost:5000';
 
 	const mockReplies = [
 		"That's an interesting question! I'd be happy to help you with that.",
@@ -18,6 +19,25 @@
 
 	function delay(ms) {
 		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	function getStoredUser() {
+		const raw = localStorage.getItem('chatUser');
+		if (!raw) return null;
+		try {
+			return JSON.parse(raw);
+		} catch {
+			return null;
+		}
+	}
+
+	function ensureAuthenticatedUser() {
+		const user = getStoredUser();
+		const userId = user?.userId ?? user?.UserId;
+		if (!user || !userId) {
+			throw new Error('You must be logged in to start a chat.');
+		}
+		return { user, userId };
 	}
 
 	function ensureOk(response, label) {
@@ -67,15 +87,19 @@
 
 	async function chat(message) {
 		if (!message) throw new Error('Message text is required');
+		const { userId } = ensureAuthenticatedUser();
+		
 		if (USE_MOCK_API) {
 			await delay(700);
 			const reply = mockReplies[Math.floor(Math.random() * mockReplies.length)];
 			return { reply };
 		}
-		const res = await fetch(`${API_BASE}/api/chat`, {
+		
+		const apiBase = getApiBase();
+		const res = await fetch(`${apiBase}/api/chat`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ message }),
+			body: JSON.stringify({ message, userId }),
 		});
 		const data = await ensureOk(res, 'Chat').json();
 		return { reply: data.reply ?? '' };
@@ -85,14 +109,17 @@
 		if (!(audioBlob instanceof Blob)) {
 			throw new Error('Audio blob is required for STT');
 		}
+		
 		if (USE_MOCK_API) {
 			await delay(600);
 			const ts = new Date().toLocaleTimeString();
 			return { transcript: `Mock transcript captured at ${ts}` };
 		}
+		
 		const form = new FormData();
 		form.append('audio', audioBlob, 'speech.webm');
-		const res = await fetch(`${API_BASE}/api/stt`, {
+		const apiBase = getApiBase();
+		const res = await fetch(`${apiBase}/api/stt`, {
 			method: 'POST',
 			body: form,
 		});
@@ -102,11 +129,14 @@
 
 	async function tts(text) {
 		if (!text) throw new Error('Text is required for TTS');
+		
 		if (USE_MOCK_API) {
 			await delay(500);
 			return createToneWavBlob(750, 620);
 		}
-		const res = await fetch(`${API_BASE}/api/tts`, {
+		
+		const apiBase = getApiBase();
+		const res = await fetch(`${apiBase}/api/tts`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ text }),
@@ -122,4 +152,3 @@
 		tts,
 	});
 })();
-

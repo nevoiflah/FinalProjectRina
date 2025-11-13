@@ -72,12 +72,20 @@
 
 	<script>
 		(function () {
-			const user = localStorage.getItem('chatUser');
-			if (!user) {
+			const raw = localStorage.getItem('chatUser');
+			if (!raw) {
+				window.location.replace('login.html');
+				return;
+			}
+			try {
+				window.__CHAT_USER__ = JSON.parse(raw);
+			} catch {
+				localStorage.removeItem('chatUser');
 				window.location.replace('login.html');
 			}
 		})();
 	</script>
+	<script src="./config.js"></script>
 	<script src="./api.js"></script>
 	<script src="./script.js"></script>
 	<script src="./app.js"></script>

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>AI Robot Assistant • Register</title>
+	<title>AI Robot Assistant • Register</title>
 	<link rel="stylesheet" href="./styles.css">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,55 +11,55 @@
 </head>
 <body class="auth-page">
 	<div class="auth-shell">
-			<section class="auth-panel auth-hero">
-				<div class="robot-icon">🤖</div>
-				<h1>Create your secure workspace</h1>
-				<p>Get instant access to voice + text conversations, synced across every device with enterprise-grade privacy.</p>
+		<section class="auth-panel auth-hero">
+			<div class="robot-icon">🤖</div>
+			<h1>Create your secure workspace</h1>
+			<p>Get instant access to voice + text conversations, synced across every device with enterprise-grade privacy.</p>
 
-				<div class="auth-badges">
-					<span class="auth-badge">SSO-ready</span>
-					<span class="auth-badge">Voice-first</span>
-					<span class="auth-badge">Enterprise</span>
-				</div>
+			<div class="auth-badges">
+				<span class="auth-badge">SSO-ready</span>
+				<span class="auth-badge">Voice-first</span>
+				<span class="auth-badge">Enterprise</span>
+			</div>
 
-				<ul class="auth-benefits">
-					<li>Invite teammates and share chat transcripts</li>
-					<li>Use natural speech with automatic transcripts</li>
-					<li>Keep data private with zero third‑party tracking</li>
-				</ul>
-			</section>
+			<ul class="auth-benefits">
+				<li>Invite teammates and share chat transcripts</li>
+				<li>Use natural speech with automatic transcripts</li>
+				<li>Keep data private with zero third‑party tracking</li>
+			</ul>
+		</section>
 
 		<section class="auth-panel auth-card">
 			<div class="auth-header">
-				<h2 class="auth-title">Request access</h2>
-				<p class="auth-subtitle" id="registerSubtitle">Tell us about yourself to get started.</p>
+				<h2 class="auth-title">Create account</h2>
+				<p class="auth-subtitle" id="registerSubtitle">Join us and start chatting with AI.</p>
 			</div>
 
 			<div class="auth-scroll">
 				<form id="registerForm" class="auth-form">
 					<div class="auth-field">
 						<label for="regName">Full name</label>
-						<input type="text" id="regName" class="message-input" placeholder="Grace Hopper" required>
+						<input type="text" id="regName" class="message-input" placeholder="Grace Hopper" autocomplete="name" required>
 					</div>
 
 					<div class="auth-field">
-						<label for="regEmail">Work email</label>
-						<input type="email" id="regEmail" class="message-input" placeholder="grace@company.com" required>
+						<label for="regEmail">Email address</label>
+						<input type="email" id="regEmail" class="message-input" placeholder="grace@company.com" autocomplete="email" required>
 					</div>
 
 					<div class="auth-field">
-						<label for="regOrg">Company / team</label>
-						<input type="text" id="regOrg" class="message-input" placeholder="Neptune Robotics" required>
+						<label for="regOrg">Company / team (optional)</label>
+						<input type="text" id="regOrg" class="message-input" placeholder="Neptune Robotics">
 					</div>
 
 					<div class="auth-field">
 						<label for="regPassword">Password</label>
-						<input type="password" id="regPassword" class="message-input" placeholder="Create a strong password" minlength="6" required>
+						<input type="password" id="regPassword" class="message-input" placeholder="At least 6 characters" minlength="6" autocomplete="new-password" required>
 					</div>
 
 					<div class="auth-field">
 						<label for="regConfirm">Confirm password</label>
-						<input type="password" id="regConfirm" class="message-input" placeholder="Repeat your password" minlength="6" required>
+						<input type="password" id="regConfirm" class="message-input" placeholder="Repeat your password" minlength="6" autocomplete="new-password" required>
 					</div>
 
 					<button type="submit" class="primary-btn">Create account</button>
@@ -68,57 +68,114 @@
 				<div class="auth-status" id="registerStatus"></div>
 
 				<div class="auth-links">
-					<span>Already have access? <a class="link-btn" href="login.html">Back to login</a></span>
+					<span>Already have an account? <a class="link-btn" href="login.html">Sign in</a></span>
 				</div>
 			</div>
 		</section>
 	</div>
 
-		<script>
-			(function () {
-				const form = document.getElementById('registerForm');
-				const statusEl = document.getElementById('registerStatus');
-				const subtitle = document.getElementById('registerSubtitle');
+	<script src="./config.js"></script>
+	<script>
+	(function () {
+		const ChatConfig = window.ChatConfig;
+		const form = document.getElementById('registerForm');
+		const statusEl = document.getElementById('registerStatus');
+		const subtitle = document.getElementById('registerSubtitle');
+		const submitBtn = form.querySelector('button[type="submit"]');
 
-				function setStatus(msg, timeout = 0) {
-					statusEl.textContent = msg;
-					if (timeout) {
-						setTimeout(() => statusEl.textContent = '', timeout);
-					}
+		function setStatus(msg, isError = false) {
+			statusEl.textContent = msg;
+			statusEl.style.color = isError ? '#ff6b6b' : 'var(--text-light)';
+		}
+
+		function getApiBase() {
+			const base = ChatConfig?.getApiBase() || '';
+			// Default to localhost if not configured
+			return base || 'http://localhost:5000';
+		}
+
+		async function registerUser(payload) {
+			const apiBase = getApiBase();
+			const response = await fetch(`${apiBase}/api/user/register`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+
+			const data = await response.json().catch(() => ({}));
+			
+			if (!response.ok) {
+				if (response.status === 405 || response.status === 404) {
+					throw new Error('Cannot connect to server. Please check if the server is running.');
 				}
-
-				const existingUser = localStorage.getItem('chatUser');
-				if (existingUser) {
-					setStatus('You are currently logged in. Submitting will update your profile.');
+				if (response.status === 409) {
+					throw new Error('An account with this email already exists.');
 				}
+				throw new Error(data?.error || 'Registration failed. Please try again.');
+			}
+			return data;
+		}
 
-				form.addEventListener('submit', (event) => {
-					event.preventDefault();
-					const name = document.getElementById('regName').value.trim();
-					const email = document.getElementById('regEmail').value.trim();
-					const org = document.getElementById('regOrg').value.trim();
-					const password = document.getElementById('regPassword').value;
-					const confirm = document.getElementById('regConfirm').value;
+		form.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			
+			const name = document.getElementById('regName').value.trim();
+			const email = document.getElementById('regEmail').value.trim();
+			const org = document.getElementById('regOrg').value.trim();
+			const password = document.getElementById('regPassword').value;
+			const confirm = document.getElementById('regConfirm').value;
 
-					if (password !== confirm) {
-						setStatus('Passwords do not match.', 1800);
-						return;
-					}
+			// Validation
+			if (!name || !email || !password) {
+				setStatus('Please fill in all required fields.', true);
+				return;
+			}
 
-					const user = {
-						name,
-						email,
-						org,
-						createdAt: new Date().toISOString(),
-					};
+			if (password.length < 6) {
+				setStatus('Password must be at least 6 characters long.', true);
+				return;
+			}
 
-					localStorage.setItem('chatUser', JSON.stringify(user));
-					setStatus('Account created! Redirecting to chat...');
-					setTimeout(() => {
-						window.location.href = 'index.html';
-					}, 900);
+			if (password !== confirm) {
+				setStatus('Passwords do not match.', true);
+				return;
+			}
+
+			// Email validation
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (!emailRegex.test(email)) {
+				setStatus('Please enter a valid email address.', true);
+				return;
+			}
+
+			submitBtn.disabled = true;
+			setStatus('Creating your account...');
+
+			try {
+				const registered = await registerUser({
+					name,
+					email,
+					org: org || null,
+					password,
 				});
-			})();
-		</script>
-	</body>
-	</html>
+
+				// Store user data in localStorage
+				localStorage.setItem('chatUser', JSON.stringify(registered));
+				
+				const userName = registered.name || registered.Name || name;
+				subtitle.textContent = `Welcome aboard, ${userName}!`;
+				setStatus('Account created successfully! Redirecting...');
+
+				setTimeout(() => {
+					window.location.href = 'index.html';
+				}, 1000);
+			} catch (err) {
+				setStatus(err.message || 'Registration failed. Please try again.', true);
+			} finally {
+				submitBtn.disabled = false;
+			}
+		});
+	})();
+	</script>
+</body>
+</html>
