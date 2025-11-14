@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FinalProjectRina.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f56bc14afc9afdb347f070497da8a3909cae0568")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6c9c80bb2925ef49455f6cbe7d6e4372d1b7e6a3")]
 [assembly: System.Reflection.AssemblyProductAttribute("FinalProjectRina.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FinalProjectRina.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

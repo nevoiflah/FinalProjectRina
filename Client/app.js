@@ -13,6 +13,9 @@
 				return;
 			}
 
+			// TTS is disabled by default - users won't hear beeps after each message
+			this.ttsEnabled = false;
+
 			this.voiceController = this.createVoiceController();
 			this.bindEvents();
 			this.resetConversation();
@@ -30,13 +33,14 @@
 				chatMessages: document.getElementById('chatMessages'),
 				recordingIndicator: document.getElementById('recordingIndicator'),
 				ttsAudio: document.getElementById('ttsAudio'),
+				ttsToggle: document.getElementById('ttsToggle'),
 			};
 
 			const missing = Object.entries(refs)
 				.filter(([, el]) => !el)
 				.map(([key]) => key);
 			if (missing.length) {
-				console.error(`ChatApp initialization failed — missing elements: ${missing.join(', ')}`);
+				console.error(`ChatApp initialization failed – missing elements: ${missing.join(', ')}`);
 				return null;
 			}
 			return refs;
@@ -48,12 +52,13 @@
 				micButton: this.refs.micBtn,
 				indicatorEl: this.refs.recordingIndicator,
 				inputEl: this.refs.messageInput,
+				// Changed: Put transcription in input field for review/edit instead of auto-sending
 				onTranscription: (text) => this.handleVoiceTranscription(text),
 			});
 		}
 
 		bindEvents() {
-			const { startChatBtn, backBtn, sendBtn, micBtn, messageInput } = this.refs;
+			const { startChatBtn, backBtn, sendBtn, micBtn, messageInput, ttsToggle } = this.refs;
 
 			startChatBtn.addEventListener('click', () => this.startChat());
 			backBtn.addEventListener('click', () => this.backToStart());
@@ -68,6 +73,27 @@
 
 			if (micBtn && this.voiceController) {
 				micBtn.addEventListener('click', () => this.voiceController.toggle());
+			}
+
+			// Toggle TTS on/off
+			if (ttsToggle) {
+				ttsToggle.addEventListener('click', () => this.toggleTts());
+			}
+		}
+
+		toggleTts() {
+			this.ttsEnabled = !this.ttsEnabled;
+			const { ttsToggle } = this.refs;
+			if (ttsToggle) {
+				ttsToggle.classList.toggle('active', this.ttsEnabled);
+				ttsToggle.setAttribute('aria-pressed', String(this.ttsEnabled));
+				ttsToggle.title = this.ttsEnabled ? 'Voice responses ON' : 'Voice responses OFF';
+				
+				// Visual feedback
+				const icon = ttsToggle.querySelector('svg');
+				if (icon) {
+					icon.style.opacity = this.ttsEnabled ? '1' : '0.5';
+				}
 			}
 		}
 
@@ -130,8 +156,13 @@
 
 		handleVoiceTranscription(text) {
 			if (!text) return;
-			this.refs.messageInput.value = '';
-			this.processOutgoingMessage(text);
+			// NEW BEHAVIOR: Put transcribed text in input field so user can review/edit
+			// before sending. User must click send button or press Enter to actually send.
+			this.refs.messageInput.value = text;
+			this.refs.messageInput.focus();
+			
+			// Move cursor to end of text
+			this.refs.messageInput.setSelectionRange(text.length, text.length);
 		}
 
 		handleSend() {
@@ -151,7 +182,11 @@
 				const { reply } = await window.BotAPI.chat(text);
 				this.lastBotReply = reply || "I'm sorry, I didn't catch that.";
 				this.addMessage(this.lastBotReply, 'bot');
-				this.tryPlayTts(this.lastBotReply);
+				
+				// Only play TTS if user has enabled it
+				if (this.ttsEnabled) {
+					this.tryPlayTts(this.lastBotReply);
+				}
 			} catch (err) {
 				console.error('Chat request failed:', err);
 				this.addMessage('Something went wrong. Please try again.', 'bot');
@@ -183,7 +218,7 @@
 		async tryPlayTts(text) {
 			if (!text || !this.refs.ttsAudio) return;
 			if (window.BotAPI?.mode === 'mock') {
-				// Skip the placeholder tone when mock APIs are enabled.
+				// Skip TTS in mock mode
 				return;
 			}
 			try {
@@ -191,7 +226,7 @@
 				const url = URL.createObjectURL(audioBlob);
 				this.refs.ttsAudio.src = url;
 				await this.refs.ttsAudio.play().catch(() => {
-					// Autoplay might be blocked; user can trigger playback later if needed.
+					// Autoplay might be blocked; that's okay
 				});
 			} catch (err) {
 				console.warn('TTS playback failed:', err);

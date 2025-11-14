@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>AI Robot Assistant • My Profile</title>
+	<link rel="stylesheet" href="./styles.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+	<div class="auth-shell profile-shell">
+		<section class="auth-panel profile-panel">
+			<div class="profile-header">
+				<div class="robot-icon">👤</div>
+				<h1 class="profile-title">My Profile</h1>
+				<p class="profile-subtitle">Manage your account information</p>
+			</div>
+
+			<div class="profile-content">
+				<!-- View Mode -->
+				<div id="viewMode" class="profile-view">
+					<div class="profile-info-grid">
+						<div class="profile-info-item">
+							<label class="info-label">Full Name</label>
+							<div class="info-value" id="viewName">-</div>
+						</div>
+
+						<div class="profile-info-item">
+							<label class="info-label">Email Address</label>
+							<div class="info-value" id="viewEmail">-</div>
+						</div>
+
+						<div class="profile-info-item">
+							<label class="info-label">Organization</label>
+							<div class="info-value" id="viewOrg">Not specified</div>
+						</div>
+
+						<div class="profile-info-item">
+							<label class="info-label">Account Created</label>
+							<div class="info-value" id="viewCreated">-</div>
+						</div>
+
+						<div class="profile-info-item">
+							<label class="info-label">Last Login</label>
+							<div class="info-value" id="viewLastLogin">-</div>
+						</div>
+
+						<div class="profile-info-item">
+							<label class="info-label">Account Status</label>
+							<div class="info-value">
+								<span class="status-badge status-active" id="viewStatus">Active</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="profile-actions">
+						<button type="button" class="primary-btn" id="editBtn">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+							</svg>
+							Edit Profile
+						</button>
+						<button type="button" class="secondary-btn" id="backToChatBtn">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<line x1="19" y1="12" x2="5" y2="12"></line>
+								<polyline points="12 19 5 12 12 5"></polyline>
+							</svg>
+							Back to Chat
+						</button>
+					</div>
+				</div>
+
+				<!-- Edit Mode -->
+				<div id="editMode" class="profile-edit hidden">
+					<form id="profileForm" class="auth-form">
+						<div class="auth-field">
+							<label for="editName">Full Name</label>
+							<input type="text" id="editName" class="message-input" placeholder="Your full name" required>
+						</div>
+
+						<div class="auth-field">
+							<label for="editEmail">Email Address</label>
+							<input type="email" id="editEmail" class="message-input" placeholder="your@email.com" required disabled>
+							<small class="field-note">Email cannot be changed</small>
+						</div>
+
+						<div class="auth-field">
+							<label for="editOrg">Organization (optional)</label>
+							<input type="text" id="editOrg" class="message-input" placeholder="Company or team name">
+						</div>
+
+						<div class="auth-field">
+							<label for="editPassword">New Password (optional)</label>
+							<input type="password" id="editPassword" class="message-input" placeholder="Leave blank to keep current" minlength="6">
+							<small class="field-note">Minimum 6 characters</small>
+						</div>
+
+						<div class="auth-field">
+							<label for="editConfirmPassword">Confirm New Password</label>
+							<input type="password" id="editConfirmPassword" class="message-input" placeholder="Confirm new password">
+						</div>
+
+						<div class="profile-actions">
+							<button type="submit" class="primary-btn">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<polyline points="20 6 9 17 4 12"></polyline>
+								</svg>
+								Save Changes
+							</button>
+							<button type="button" class="secondary-btn" id="cancelBtn">Cancel</button>
+						</div>
+					</form>
+
+					<div class="auth-status" id="editStatus"></div>
+				</div>
+
+				<!-- Danger Zone -->
+				<div class="danger-zone">
+					<h3 class="danger-title">Danger Zone</h3>
+					<p class="danger-description">Irreversible actions that affect your account.</p>
+					<button type="button" class="danger-btn" id="deleteAccountBtn">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="3 6 5 6 21 6"></polyline>
+							<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+						</svg>
+						Delete Account
+					</button>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<script src="./config.js"></script>
+	<script>
+	(function () {
+		const ChatConfig = window.ChatConfig;
+
+		// Check authentication
+		let currentUser = null;
+		const raw = localStorage.getItem('chatUser');
+		if (!raw) {
+			window.location.replace('login.html');
+			return;
+		}
+
+		try {
+			currentUser = JSON.parse(raw);
+			if (!currentUser || !(currentUser.userId || currentUser.UserId)) {
+				localStorage.removeItem('chatUser');
+				window.location.replace('login.html');
+				return;
+			}
+		} catch {
+			localStorage.removeItem('chatUser');
+			window.location.replace('login.html');
+			return;
+		}
+
+		// Elements
+		const viewMode = document.getElementById('viewMode');
+		const editMode = document.getElementById('editMode');
+		const editBtn = document.getElementById('editBtn');
+		const cancelBtn = document.getElementById('cancelBtn');
+		const backToChatBtn = document.getElementById('backToChatBtn');
+		const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+		const profileForm = document.getElementById('profileForm');
+		const editStatus = document.getElementById('editStatus');
+
+		// View mode elements
+		const viewName = document.getElementById('viewName');
+		const viewEmail = document.getElementById('viewEmail');
+		const viewOrg = document.getElementById('viewOrg');
+		const viewCreated = document.getElementById('viewCreated');
+		const viewLastLogin = document.getElementById('viewLastLogin');
+		const viewStatus = document.getElementById('viewStatus');
+
+		// Edit mode elements
+		const editName = document.getElementById('editName');
+		const editEmail = document.getElementById('editEmail');
+		const editOrg = document.getElementById('editOrg');
+		const editPassword = document.getElementById('editPassword');
+		const editConfirmPassword = document.getElementById('editConfirmPassword');
+
+		function setStatus(msg, isError = false) {
+			editStatus.textContent = msg;
+			editStatus.style.color = isError ? '#ff6b6b' : 'var(--text-light)';
+		}
+
+		function getApiBase() {
+			return ChatConfig?.getApiBase() || 'http://localhost:5000';
+		}
+
+		function formatDate(dateString) {
+			if (!dateString) return 'Never';
+			const date = new Date(dateString);
+			return date.toLocaleDateString('en-US', { 
+				year: 'numeric', 
+				month: 'long', 
+				day: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit'
+			});
+		}
+
+		function loadUserData() {
+			// Normalize field names (handle both Pascal and camel case)
+			const userId = currentUser.userId || currentUser.UserId;
+			const name = currentUser.name || currentUser.Name;
+			const email = currentUser.email || currentUser.Email;
+			const org = currentUser.organization || currentUser.Organization;
+			const createdAt = currentUser.createdAt || currentUser.CreatedAt;
+			const lastLoginAt = currentUser.lastLoginAt || currentUser.LastLoginAt;
+			const isActive = currentUser.isActive ?? currentUser.IsActive ?? true;
+
+			// Display in view mode
+			viewName.textContent = name || '-';
+			viewEmail.textContent = email || '-';
+			viewOrg.textContent = org || 'Not specified';
+			viewCreated.textContent = formatDate(createdAt);
+			viewLastLogin.textContent = formatDate(lastLoginAt);
+			viewStatus.textContent = isActive ? 'Active' : 'Inactive';
+			viewStatus.className = isActive ? 'status-badge status-active' : 'status-badge status-inactive';
+
+			// Pre-fill edit form
+			editName.value = name || '';
+			editEmail.value = email || '';
+			editOrg.value = org || '';
+		}
+
+		function showEditMode() {
+			viewMode.classList.add('hidden');
+			editMode.classList.remove('hidden');
+			editPassword.value = '';
+			editConfirmPassword.value = '';
+			setStatus('');
+		}
+
+		function showViewMode() {
+			editMode.classList.add('hidden');
+			viewMode.classList.remove('hidden');
+			loadUserData();
+		}
+
+		async function updateProfile(data) {
+			const apiBase = getApiBase();
+			const userId = currentUser.userId || currentUser.UserId;
+			
+			const response = await fetch(`${apiBase}/api/user/${userId}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			});
+
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({}));
+				throw new Error(error.error || 'Failed to update profile');
+			}
+
+			return await response.json();
+		}
+
+		async function deleteAccount() {
+			const apiBase = getApiBase();
+			const userId = currentUser.userId || currentUser.UserId;
+			
+			const response = await fetch(`${apiBase}/api/user/${userId}`, {
+				method: 'DELETE',
+			});
+
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({}));
+				throw new Error(error.error || 'Failed to delete account');
+			}
+		}
+
+		// Event Listeners
+		editBtn.addEventListener('click', showEditMode);
+		cancelBtn.addEventListener('click', showViewMode);
+		backToChatBtn.addEventListener('click', () => {
+			window.location.href = 'index.html';
+		});
+
+		profileForm.addEventListener('submit', async (event) => {
+			event.preventDefault();
+
+			const name = editName.value.trim();
+			const org = editOrg.value.trim();
+			const password = editPassword.value;
+			const confirmPassword = editConfirmPassword.value;
+
+			// Validation
+			if (!name) {
+				setStatus('Name is required', true);
+				return;
+			}
+
+			if (password && password.length < 6) {
+				setStatus('Password must be at least 6 characters', true);
+				return;
+			}
+
+			if (password && password !== confirmPassword) {
+				setStatus('Passwords do not match', true);
+				return;
+			}
+
+			const submitBtn = profileForm.querySelector('button[type="submit"]');
+			submitBtn.disabled = true;
+			setStatus('Updating profile...');
+
+			try {
+				const updateData = {
+					name,
+					organization: org || null,
+				};
+
+				if (password) {
+					updateData.password = password;
+				}
+
+				const updatedUser = await updateProfile(updateData);
+				
+				// Update localStorage with new data
+				const merged = { ...currentUser, ...updatedUser };
+				localStorage.setItem('chatUser', JSON.stringify(merged));
+				currentUser = merged;
+
+				setStatus('Profile updated successfully!');
+				setTimeout(() => {
+					showViewMode();
+				}, 1500);
+			} catch (err) {
+				console.error('Profile update failed:', err);
+				setStatus(err.message || 'Failed to update profile', true);
+			} finally {
+				submitBtn.disabled = false;
+			}
+		});
+
+		deleteAccountBtn.addEventListener('click', async () => {
+			const confirmed = confirm(
+				'Are you sure you want to delete your account?\n\n' +
+				'This action cannot be undone. All your data will be permanently deleted.'
+			);
+
+			if (!confirmed) return;
+
+			const doubleConfirm = confirm(
+				'FINAL WARNING!\n\n' +
+				'This will permanently delete your account and all associated data.\n\n' +
+				'Are you absolutely sure?'
+			);
+
+			if (!doubleConfirm) return;
+
+			deleteAccountBtn.disabled = true;
+			deleteAccountBtn.textContent = 'Deleting...';
+
+			try {
+				await deleteAccount();
+				localStorage.removeItem('chatUser');
+				alert('Your account has been deleted. You will be redirected to the login page.');
+				window.location.replace('login.html');
+			} catch (err) {
+				console.error('Account deletion failed:', err);
+				alert(err.message || 'Failed to delete account');
+				deleteAccountBtn.disabled = false;
+				deleteAccountBtn.textContent = 'Delete Account';
+			}
+		});
+
+		// Load user data on page load
+		loadUserData();
+	})();
+	</script>
+</body>
+</html>

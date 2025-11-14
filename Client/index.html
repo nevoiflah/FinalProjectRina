@@ -13,9 +13,27 @@
 	<!-- Start Screen -->
 	<div id="startScreen" class="screen">
 		<div class="center-content">
+			<!-- User Menu -->
+			<div class="user-menu">
+				<button id="profileBtn" class="icon-btn user-menu-btn" title="My Profile">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+						<circle cx="12" cy="7" r="4"></circle>
+					</svg>
+				</button>
+				<button id="logoutBtn" class="icon-btn user-menu-btn" title="Logout">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+						<polyline points="16 17 21 12 16 7"></polyline>
+						<line x1="21" y1="12" x2="9" y2="12"></line>
+					</svg>
+				</button>
+			</div>
+
 			<div class="robot-icon">🤖</div>
 			<h1 class="main-title">AI Robot Assistant</h1>
 			<p class="main-subtitle">Your intelligent conversational companion</p>
+			<p class="user-greeting" id="userGreeting">Welcome back!</p>
 			<button id="startChatBtn" class="primary-btn">Start Chat</button>
 		</div>
 	</div>
@@ -32,7 +50,15 @@
 						<div class="bot-status">Online</div>
 					</div>
 				</div>
-				<div class="header-spacer"></div>
+				<div class="header-actions">
+					<button id="ttsToggle" class="icon-btn" title="Voice responses OFF" aria-pressed="false">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5">
+							<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+							<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+							<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+						</svg>
+					</button>
+				</div>
 			</header>
 
 			<main class="chat-messages" id="chatMessages">
@@ -62,7 +88,7 @@
 				</div>
 				<div id="recordingIndicator" class="recording-indicator hidden">
 					<div class="recording-dot"></div>
-					<span>Recording... Tap mic to stop</span>
+					<span>Recording... Tap mic to stop and review</span>
 				</div>
 			</footer>
 		</div>
@@ -78,10 +104,39 @@
 				return;
 			}
 			try {
-				window.__CHAT_USER__ = JSON.parse(raw);
+				const user = JSON.parse(raw);
+				window.__CHAT_USER__ = user;
+				
+				// Display user greeting
+				const userGreeting = document.getElementById('userGreeting');
+				if (userGreeting && user) {
+					const name = user.name || user.Name || 'User';
+					const firstName = name.split(' ')[0];
+					userGreeting.textContent = `Welcome back, ${firstName}!`;
+				}
 			} catch {
 				localStorage.removeItem('chatUser');
 				window.location.replace('login.html');
+			}
+
+			// Profile button
+			const profileBtn = document.getElementById('profileBtn');
+			if (profileBtn) {
+				profileBtn.addEventListener('click', () => {
+					window.location.href = 'profile.html';
+				});
+			}
+
+			// Logout button
+			const logoutBtn = document.getElementById('logoutBtn');
+			if (logoutBtn) {
+				logoutBtn.addEventListener('click', () => {
+					const confirmed = confirm('Are you sure you want to logout?');
+					if (confirmed) {
+						localStorage.removeItem('chatUser');
+						window.location.replace('login.html');
+					}
+				});
 			}
 		})();
 	</script>

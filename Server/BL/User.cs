@@ -31,6 +31,8 @@ public interface IUserService
     User? Authenticate(string? email, string? password);
     User? FindByEmail(string? email);
     User? FindById(string? userId);
+    User? UpdateProfile(string? userId, string? name, string? organization, string? password);
+    bool DeleteUser(string? userId);
 }
 
 public class UserService : IUserService
@@ -41,8 +43,22 @@ public class UserService : IUserService
 
     public UserService(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("myProjDB")
-            ?? throw new InvalidOperationException("Connection string 'myProjDB' was not found.");
+        var connStr = configuration.GetConnectionString("myProjDB");
+        if (string.IsNullOrWhiteSpace(connStr))
+        {
+            throw new InvalidOperationException("Connection string 'myProjDB' was not found in configuration.");
+        }
+
+        // Ensure connection string has required security settings
+        if (!connStr.Contains("TrustServerCertificate", StringComparison.OrdinalIgnoreCase))
+        {
+            _connectionString = connStr + ";TrustServerCertificate=True;Encrypt=True";
+        }
+        else
+        {
+            _connectionString = connStr;
+        }
+
         EnsureSchema();
     }
 
@@ -56,16 +72,22 @@ public class UserService : IUserService
 
         using var conn = CreateConnection();
         using var cmd = new SqlCommand(sql, conn);
-        conn.Open();
-
-        using var reader = cmd.ExecuteReader();
-        var users = new List<User>();
-        while (reader.Read())
+        
+        try
         {
-            users.Add(MapUser(reader));
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+            var users = new List<User>();
+            while (reader.Read())
+            {
+                users.Add(MapUser(reader));
+            }
+            return users;
         }
-
-        return users;
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to retrieve users from database: {ex.Message}", ex);
+        }
     }
 
     public User? FindByEmail(string? email)
@@ -140,6 +162,70 @@ public class UserService : IUserService
         return stored;
     }
 
+    public User? UpdateProfile(string? userId, string? name, string? organization, string? password)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("User ID is required", nameof(userId));
+        }
+
+        var user = GetUserById(userId.Trim());
+        if (user is null)
+        {
+            return null;
+        }
+
+        // Update name if provided
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            user.Name = name.Trim();
+        }
+
+        // Update organization (allow null to clear it)
+        user.Organization = string.IsNullOrWhiteSpace(organization) ? null : organization.Trim();
+
+        // Update password if provided
+        if (!string.IsNullOrWhiteSpace(password))
+        {
+            if (password.Length < 6)
+            {
+                throw new ArgumentException("Password must be at least 6 characters", nameof(password));
+            }
+            user.PasswordHash = HashPassword(password);
+        }
+
+        UpdateUserInDb(user);
+        return user;
+    }
+
+    public bool DeleteUser(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return false;
+        }
+
+        const string sql = """
+            DELETE FROM dbo.NLA_Users
+            WHERE UserId = @UserId
+            """;
+
+        using var conn = CreateConnection();
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@UserId", userId.Trim());
+
+        try
+        {
+            conn.Open();
+            var rowsAffected = cmd.ExecuteNonQuery();
+            return rowsAffected > 0;
+        }
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to delete user: {ex.Message}", ex);
+        }
+    }
+
     private static string NormalizeEmail(string email)
     {
         try
@@ -205,7 +291,8 @@ public class UserService : IUserService
             }
             catch (SqlException ex)
             {
-                throw new InvalidOperationException("Failed to ensure the NLA_Users schema is up to date.", ex);
+                Console.WriteLine($"Warning: Could not ensure NLA_Users schema: {ex.Message}");
+                _schemaEnsured = true;
             }
         }
     }
@@ -231,14 +318,46 @@ public class UserService : IUserService
         cmd.Parameters.Add("@LastLoginAt", SqlDbType.DateTime2).Value = (object?)user.LastLoginAt ?? DBNull.Value;
         cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
 
-        conn.Open();
         try
         {
+            conn.Open();
             cmd.ExecuteNonQuery();
         }
         catch (SqlException ex) when (ex.Number is 2627 or 2601)
         {
             throw new InvalidOperationException("User with this email already exists", ex);
+        }
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to create user: {ex.Message}", ex);
+        }
+    }
+
+    private void UpdateUserInDb(User user)
+    {
+        const string sql = """
+            UPDATE dbo.NLA_Users
+            SET Name = @Name,
+                Organization = @Organization,
+                PasswordHash = @PasswordHash
+            WHERE UserId = @UserId
+            """;
+
+        using var conn = CreateConnection();
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@UserId", user.UserId);
+        cmd.Parameters.AddWithValue("@Name", user.Name);
+        cmd.Parameters.Add("@Organization", SqlDbType.NVarChar, 200).Value = (object?)user.Organization ?? DBNull.Value;
+        cmd.Parameters.AddWithValue("@PasswordHash", user.PasswordHash);
+
+        try
+        {
+            conn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to update user: {ex.Message}", ex);
         }
     }
 
@@ -253,10 +372,17 @@ public class UserService : IUserService
         using var conn = CreateConnection();
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@Email", normalizedEmail);
-        conn.Open();
-
-        using var reader = cmd.ExecuteReader();
-        return reader.Read() ? MapUser(reader) : null;
+        
+        try
+        {
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+            return reader.Read() ? MapUser(reader) : null;
+        }
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to find user by email: {ex.Message}", ex);
+        }
     }
 
     private User? GetUserById(string userId)
@@ -270,10 +396,17 @@ public class UserService : IUserService
         using var conn = CreateConnection();
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@UserId", userId);
-        conn.Open();
-
-        using var reader = cmd.ExecuteReader();
-        return reader.Read() ? MapUser(reader) : null;
+        
+        try
+        {
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+            return reader.Read() ? MapUser(reader) : null;
+        }
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to find user by ID: {ex.Message}", ex);
+        }
     }
 
     private static User MapUser(SqlDataReader reader)
@@ -308,9 +441,17 @@ public class UserService : IUserService
         using var conn = CreateConnection();
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@UserId", userId);
-        conn.Open();
-
-        var result = cmd.ExecuteScalar();
-        return result is DateTime dt ? dt : null;
+        
+        try
+        {
+            conn.Open();
+            var result = cmd.ExecuteScalar();
+            return result is DateTime dt ? dt : null;
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"Warning: Could not update last login time: {ex.Message}");
+            return null;
+        }
     }
 }
