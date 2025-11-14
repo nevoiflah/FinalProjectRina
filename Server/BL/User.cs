@@ -33,6 +33,8 @@ public interface IUserService
     User? FindById(string? userId);
     User? UpdateProfile(string? userId, string? name, string? organization, string? password);
     bool DeleteUser(string? userId);
+    bool ToggleAdmin(string? userId, bool isAdmin);
+    bool ToggleStatus(string? userId, bool isActive);
 }
 
 public class UserService : IUserService
@@ -452,6 +454,66 @@ public class UserService : IUserService
         {
             Console.WriteLine($"Warning: Could not update last login time: {ex.Message}");
             return null;
+        }
+    }
+
+    public bool ToggleAdmin(string? userId, bool isAdmin)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return false;
+        }
+
+        const string sql = """
+            UPDATE dbo.NLA_Users
+            SET IsAdmin = @IsAdmin
+            WHERE UserId = @UserId
+            """;
+
+        using var conn = CreateConnection();
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@UserId", userId.Trim());
+        cmd.Parameters.AddWithValue("@IsAdmin", isAdmin);
+
+        try
+        {
+            conn.Open();
+            var rowsAffected = cmd.ExecuteNonQuery();
+            return rowsAffected > 0;
+        }
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to update admin status: {ex.Message}", ex);
+        }
+    }
+
+    public bool ToggleStatus(string? userId, bool isActive)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return false;
+        }
+
+        const string sql = """
+            UPDATE dbo.NLA_Users
+            SET IsActive = @IsActive
+            WHERE UserId = @UserId
+            """;
+
+        using var conn = CreateConnection();
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@UserId", userId.Trim());
+        cmd.Parameters.AddWithValue("@IsActive", isActive);
+
+        try
+        {
+            conn.Open();
+            var rowsAffected = cmd.ExecuteNonQuery();
+            return rowsAffected > 0;
+        }
+        catch (SqlException ex)
+        {
+            throw new InvalidOperationException($"Failed to update account status: {ex.Message}", ex);
         }
     }
 }

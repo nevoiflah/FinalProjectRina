@@ -3,17 +3,25 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>AI Robot Assistant • My Profile</title>
+	<title>AI Robot Assistant â€¢ My Profile</title>
 	<link rel="stylesheet" href="./styles.css">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="auth-page">
+	<!-- Back to Chat Button - Top Left -->
+	<button type="button" class="back-to-chat-fixed" id="backToChatBtn">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<line x1="19" y1="12" x2="5" y2="12"></line>
+			<polyline points="12 19 5 12 12 5"></polyline>
+		</svg>
+		<span>Back to Chat</span>
+	</button>
+
 	<div class="auth-shell profile-shell">
 		<section class="auth-panel profile-panel">
 			<div class="profile-header">
-				<div class="robot-icon">👤</div>
 				<h1 class="profile-title">My Profile</h1>
 				<p class="profile-subtitle">Manage your account information</p>
 			</div>
@@ -62,13 +70,6 @@
 								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
 							</svg>
 							Edit Profile
-						</button>
-						<button type="button" class="secondary-btn" id="backToChatBtn">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<line x1="19" y1="12" x2="5" y2="12"></line>
-								<polyline points="12 19 5 12 12 5"></polyline>
-							</svg>
-							Back to Chat
 						</button>
 					</div>
 				</div>
@@ -131,6 +132,113 @@
 				</div>
 			</div>
 		</section>
+
+		<!-- Admin Section (Separate Panel - Only visible to admins) -->
+		<section class="auth-panel profile-panel admin-panel hidden" id="adminSection">
+			<div class="admin-header">
+				<h2 class="admin-title">Admin Dashboard</h2>
+				<p class="admin-subtitle">Manage system users and view statistics</p>
+			</div>
+
+			<div class="admin-content">
+				<!-- Statistics Cards -->
+				<div class="admin-stats">
+					<div class="stat-card">
+						<div class="stat-icon">Users</div>
+						<div class="stat-info">
+							<div class="stat-value" id="totalUsers">0</div>
+							<div class="stat-label">Total Users</div>
+						</div>
+					</div>
+					<div class="stat-card">
+						<div class="stat-icon">Active</div>
+						<div class="stat-info">
+							<div class="stat-value" id="activeUsers">0</div>
+							<div class="stat-label">Active Users</div>
+						</div>
+					</div>
+					<div class="stat-card">
+						<div class="stat-icon">Admins</div>
+						<div class="stat-info">
+							<div class="stat-value" id="adminUsers">0</div>
+							<div class="stat-label">Admins</div>
+						</div>
+					</div>
+					<div class="stat-card">
+						<div class="stat-icon">New</div>
+						<div class="stat-info">
+							<div class="stat-value" id="recentUsers">0</div>
+							<div class="stat-label">New (7 days)</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Search and Filters -->
+				<div class="admin-controls">
+					<input type="text" id="userSearch" class="message-input" placeholder="Search by name, email, or organization...">
+					<div class="admin-filters">
+						<select id="filterStatus" class="filter-select">
+							<option value="all">All Users</option>
+							<option value="active">Active Only</option>
+							<option value="inactive">Inactive Only</option>
+						</select>
+						<select id="filterAdmin" class="filter-select">
+							<option value="all">All Roles</option>
+							<option value="admin">Admins Only</option>
+							<option value="user">Users Only</option>
+						</select>
+						<button type="button" id="refreshUsers" class="icon-btn" title="Refresh user list">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="23 4 23 10 17 10"></polyline>
+								<polyline points="1 20 1 14 7 14"></polyline>
+								<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+							</svg>
+						</button>
+					</div>
+				</div>
+
+				<!-- Users Table -->
+				<div class="admin-table-wrapper">
+					<table class="admin-table">
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Email</th>
+								<th>Organization</th>
+								<th>Role</th>
+								<th>Status</th>
+								<th>Created</th>
+								<th>Last Login</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody id="usersTableBody">
+							<tr>
+								<td colspan="8" class="loading-cell">Loading users...</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<!-- User Details Modal -->
+	<div id="userModal" class="modal hidden">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">User Details</h3>
+				<button type="button" class="modal-close" id="closeModal">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<line x1="18" y1="6" x2="6" y2="18"></line>
+						<line x1="6" y1="6" x2="18" y2="18"></line>
+					</svg>
+				</button>
+			</div>
+			<div class="modal-body" id="modalBody">
+				<!-- User details will be inserted here -->
+			</div>
+		</div>
 	</div>
 
 	<script src="./config.js"></script>
@@ -159,6 +267,16 @@
 			return;
 		}
 
+		// Check if user is admin - with detailed logging
+		console.log('Current user data:', currentUser);
+		const isAdmin = currentUser.isAdmin ?? currentUser.IsAdmin ?? false;
+		console.log('IsAdmin value:', isAdmin);
+		console.log('Type of isAdmin:', typeof isAdmin);
+		
+		// Additional check - convert to boolean if it's a number or string
+		const isAdminBool = isAdmin === true || isAdmin === 1 || isAdmin === '1' || isAdmin === 'true';
+		console.log('Final isAdmin boolean:', isAdminBool);
+
 		// Elements
 		const viewMode = document.getElementById('viewMode');
 		const editMode = document.getElementById('editMode');
@@ -184,6 +302,20 @@
 		const editPassword = document.getElementById('editPassword');
 		const editConfirmPassword = document.getElementById('editConfirmPassword');
 
+		// Admin elements
+		const adminSection = document.getElementById('adminSection');
+		const userSearch = document.getElementById('userSearch');
+		const filterStatus = document.getElementById('filterStatus');
+		const filterAdmin = document.getElementById('filterAdmin');
+		const refreshUsers = document.getElementById('refreshUsers');
+		const usersTableBody = document.getElementById('usersTableBody');
+		const userModal = document.getElementById('userModal');
+		const closeModal = document.getElementById('closeModal');
+		const modalBody = document.getElementById('modalBody');
+
+		let allUsers = [];
+		let filteredUsers = [];
+
 		function setStatus(msg, isError = false) {
 			editStatus.textContent = msg;
 			editStatus.style.color = isError ? '#ff6b6b' : 'var(--text-light)';
@@ -202,6 +334,16 @@
 				day: 'numeric',
 				hour: '2-digit',
 				minute: '2-digit'
+			});
+		}
+
+		function formatDateShort(dateString) {
+			if (!dateString) return 'Never';
+			const date = new Date(dateString);
+			return date.toLocaleDateString('en-US', { 
+				year: 'numeric', 
+				month: 'short', 
+				day: 'numeric'
 			});
 		}
 
@@ -273,6 +415,309 @@
 			if (!response.ok) {
 				const error = await response.json().catch(() => ({}));
 				throw new Error(error.error || 'Failed to delete account');
+			}
+		}
+
+		// Admin Functions
+		async function fetchAllUsers() {
+			const apiBase = getApiBase();
+			try {
+				const response = await fetch(`${apiBase}/api/user`);
+				if (!response.ok) throw new Error('Failed to fetch users');
+				
+				const users = await response.json();
+				allUsers = users;
+				filteredUsers = users;
+				updateStatistics();
+				displayUsers();
+			} catch (err) {
+				console.error('Failed to fetch users:', err);
+				usersTableBody.innerHTML = '<tr><td colspan="8" class="error-cell">Failed to load users. Please try again.</td></tr>';
+			}
+		}
+
+		function updateStatistics() {
+			const total = allUsers.length;
+			const active = allUsers.filter(u => u.isActive || u.IsActive).length;
+			const admins = allUsers.filter(u => u.isAdmin || u.IsAdmin).length;
+			
+			// Users created in last 7 days
+			const sevenDaysAgo = new Date();
+			sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+			const recent = allUsers.filter(u => {
+				const created = new Date(u.createdAt || u.CreatedAt);
+				return created >= sevenDaysAgo;
+			}).length;
+
+			document.getElementById('totalUsers').textContent = total;
+			document.getElementById('activeUsers').textContent = active;
+			document.getElementById('adminUsers').textContent = admins;
+			document.getElementById('recentUsers').textContent = recent;
+		}
+
+		function applyFilters() {
+			const searchTerm = userSearch.value.toLowerCase();
+			const statusFilter = filterStatus.value;
+			const adminFilter = filterAdmin.value;
+
+			filteredUsers = allUsers.filter(user => {
+				// Search filter
+				const name = (user.name || user.Name || '').toLowerCase();
+				const email = (user.email || user.Email || '').toLowerCase();
+				const org = (user.organization || user.Organization || '').toLowerCase();
+				const matchesSearch = name.includes(searchTerm) || 
+									  email.includes(searchTerm) || 
+									  org.includes(searchTerm);
+
+				// Status filter
+				const isActive = user.isActive ?? user.IsActive ?? true;
+				const matchesStatus = statusFilter === 'all' || 
+									  (statusFilter === 'active' && isActive) || 
+									  (statusFilter === 'inactive' && !isActive);
+
+				// Admin filter
+				const isUserAdmin = user.isAdmin ?? user.IsAdmin ?? false;
+				const matchesAdmin = adminFilter === 'all' || 
+									 (adminFilter === 'admin' && isUserAdmin) || 
+									 (adminFilter === 'user' && !isUserAdmin);
+
+				return matchesSearch && matchesStatus && matchesAdmin;
+			});
+
+			displayUsers();
+		}
+
+		function displayUsers() {
+			if (filteredUsers.length === 0) {
+				usersTableBody.innerHTML = '<tr><td colspan="8" class="empty-cell">No users found matching your criteria.</td></tr>';
+				return;
+			}
+
+			usersTableBody.innerHTML = filteredUsers.map(user => {
+				const userId = user.userId || user.UserId;
+				const name = user.name || user.Name;
+				const email = user.email || user.Email;
+				const org = user.organization || user.Organization || 'N/A';
+				const isUserAdmin = user.isAdmin ?? user.IsAdmin ?? false;
+				const isActive = user.isActive ?? user.IsActive ?? true;
+				const created = formatDateShort(user.createdAt || user.CreatedAt);
+				const lastLogin = formatDateShort(user.lastLoginAt || user.LastLoginAt);
+				const isCurrentUser = userId === (currentUser.userId || currentUser.UserId);
+
+				return `
+					<tr data-user-id="${userId}">
+						<td>
+							<div class="user-name-cell">
+								${name}
+								${isCurrentUser ? '<span class="you-badge">You</span>' : ''}
+							</div>
+						</td>
+						<td>${email}</td>
+						<td>${org}</td>
+						<td>
+							<span class="role-badge ${isUserAdmin ? 'role-admin' : 'role-user'}">
+								${isUserAdmin ? '👑 Admin' : 'User'}
+							</span>
+						</td>
+						<td>
+							<span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
+								${isActive ? 'Active' : 'Inactive'}
+							</span>
+						</td>
+						<td>${created}</td>
+						<td>${lastLogin}</td>
+						<td>
+							<div class="action-buttons">
+								<button class="action-btn view-btn" onclick="window.profileApp.viewUser('${userId}')" title="View Details">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+										<circle cx="12" cy="12" r="3"></circle>
+									</svg>
+								</button>
+								${!isCurrentUser ? `
+									<button class="action-btn ${isUserAdmin ? 'demote-btn' : 'promote-btn'}" 
+											onclick="window.profileApp.toggleAdmin('${userId}', ${!isUserAdmin})" 
+											title="${isUserAdmin ? 'Remove Admin' : 'Make Admin'}">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+											<path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path>
+										</svg>
+									</button>
+									<button class="action-btn ${isActive ? 'deactivate-btn' : 'activate-btn'}" 
+											onclick="window.profileApp.toggleStatus('${userId}', ${!isActive})" 
+											title="${isActive ? 'Deactivate' : 'Activate'}">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											${isActive ? 
+												'<path d="M18 6L6 18M6 6l12 12"></path>' : 
+												'<polyline points="20 6 9 17 4 12"></polyline>'}
+										</svg>
+									</button>
+									<button class="action-btn delete-btn" 
+											onclick="window.profileApp.deleteUser('${userId}')" 
+											title="Delete User">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<polyline points="3 6 5 6 21 6"></polyline>
+											<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+										</svg>
+									</button>
+								` : ''}
+							</div>
+						</td>
+					</tr>
+				`;
+			}).join('');
+		}
+
+		function viewUser(userId) {
+			const user = allUsers.find(u => (u.userId || u.UserId) === userId);
+			if (!user) return;
+
+			const name = user.name || user.Name;
+			const email = user.email || user.Email;
+			const org = user.organization || user.Organization || 'Not specified';
+			const isUserAdmin = user.isAdmin ?? user.IsAdmin ?? false;
+			const isActive = user.isActive ?? user.IsActive ?? true;
+			const created = formatDate(user.createdAt || user.CreatedAt);
+			const lastLogin = formatDate(user.lastLoginAt || user.LastLoginAt);
+
+			modalBody.innerHTML = `
+				<div class="user-details-grid">
+					<div class="detail-item">
+						<label class="detail-label">User ID</label>
+						<div class="detail-value">${userId}</div>
+					</div>
+					<div class="detail-item">
+						<label class="detail-label">Full Name</label>
+						<div class="detail-value">${name}</div>
+					</div>
+					<div class="detail-item">
+						<label class="detail-label">Email Address</label>
+						<div class="detail-value">${email}</div>
+					</div>
+					<div class="detail-item">
+						<label class="detail-label">Organization</label>
+						<div class="detail-value">${org}</div>
+					</div>
+					<div class="detail-item">
+						<label class="detail-label">Role</label>
+						<div class="detail-value">
+							<span class="role-badge ${isUserAdmin ? 'role-admin' : 'role-user'}">
+								${isUserAdmin ? '👑 Administrator' : 'Standard User'}
+							</span>
+						</div>
+					</div>
+					<div class="detail-item">
+						<label class="detail-label">Account Status</label>
+						<div class="detail-value">
+							<span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
+								${isActive ? 'Active' : 'Inactive'}
+							</span>
+						</div>
+					</div>
+					<div class="detail-item">
+						<label class="detail-label">Account Created</label>
+						<div class="detail-value">${created}</div>
+					</div>
+					<div class="detail-item">
+						<label class="detail-label">Last Login</label>
+						<div class="detail-value">${lastLogin}</div>
+					</div>
+				</div>
+			`;
+
+			userModal.classList.remove('hidden');
+		}
+
+		async function toggleAdmin(userId, makeAdmin) {
+			const user = allUsers.find(u => (u.userId || u.UserId) === userId);
+			if (!user) return;
+
+			const name = user.name || user.Name;
+			const action = makeAdmin ? 'promote' : 'demote';
+			const confirmed = confirm(
+				`Are you sure you want to ${action} ${name} ${makeAdmin ? 'to admin' : 'from admin'}?`
+			);
+
+			if (!confirmed) return;
+
+			const apiBase = getApiBase();
+			try {
+				const response = await fetch(`${apiBase}/api/user/${userId}/admin`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ isAdmin: makeAdmin }),
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to update admin status');
+				}
+
+				alert(`${name} has been ${makeAdmin ? 'promoted to admin' : 'demoted from admin'} successfully.`);
+				await fetchAllUsers(); // Refresh the list
+			} catch (err) {
+				console.error('Toggle admin failed:', err);
+				alert(`Failed to update admin status: ${err.message}`);
+			}
+		}
+
+		async function toggleStatus(userId, activate) {
+			const user = allUsers.find(u => (u.userId || u.UserId) === userId);
+			if (!user) return;
+
+			const name = user.name || user.Name;
+			const action = activate ? 'activate' : 'deactivate';
+			const confirmed = confirm(
+				`Are you sure you want to ${action} ${name}'s account?`
+			);
+
+			if (!confirmed) return;
+
+			const apiBase = getApiBase();
+			try {
+				const response = await fetch(`${apiBase}/api/user/${userId}/status`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ isActive: activate }),
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to update account status');
+				}
+
+				alert(`${name}'s account has been ${activate ? 'activated' : 'deactivated'} successfully.`);
+				await fetchAllUsers(); // Refresh the list
+			} catch (err) {
+				console.error('Toggle status failed:', err);
+				alert(`Failed to update account status: ${err.message}`);
+			}
+		}
+
+		async function deleteUser(userId) {
+			const user = allUsers.find(u => (u.userId || u.UserId) === userId);
+			if (!user) return;
+
+			const name = user.name || user.Name;
+			const confirmed = confirm(
+				`⚠️ WARNING ⚠️\n\nAre you sure you want to delete ${name}'s account?\n\nThis action cannot be undone and will permanently delete:\n- User profile\n- All user data\n- Chat history\n\nType the user's name to confirm: ${name}`
+			);
+
+			if (!confirmed) return;
+
+			const apiBase = getApiBase();
+			try {
+				const response = await fetch(`${apiBase}/api/user/${userId}`, {
+					method: 'DELETE',
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to delete user');
+				}
+
+				alert(`${name}'s account has been deleted successfully.`);
+				await fetchAllUsers(); // Refresh the list
+			} catch (err) {
+				console.error('Delete user failed:', err);
+				alert(`Failed to delete user: ${err.message}`);
 			}
 		}
 
@@ -371,6 +816,38 @@
 				deleteAccountBtn.textContent = 'Delete Account';
 			}
 		});
+
+		// Admin event listeners
+		if (isAdminBool) {
+			console.log('Showing admin section - user is admin');
+			adminSection.classList.remove('hidden');
+			
+			userSearch.addEventListener('input', applyFilters);
+			filterStatus.addEventListener('change', applyFilters);
+			filterAdmin.addEventListener('change', applyFilters);
+			refreshUsers.addEventListener('click', fetchAllUsers);
+			closeModal.addEventListener('click', () => {
+				userModal.classList.add('hidden');
+			});
+
+			// Close modal when clicking outside
+			userModal.addEventListener('click', (e) => {
+				if (e.target === userModal) {
+					userModal.classList.add('hidden');
+				}
+			});
+
+			// Expose functions to window for onclick handlers
+			window.profileApp = {
+				viewUser,
+				toggleAdmin,
+				toggleStatus,
+				deleteUser
+			};
+
+			// Load users
+			fetchAllUsers();
+		}
 
 		// Load user data on page load
 		loadUserData();

@@ -116,6 +116,62 @@ public class UserController : ControllerBase
         }
     }
 
+    [HttpPut("{userId}/admin")]
+    public IActionResult ToggleAdmin(string userId, [FromBody] ToggleAdminRequest? request)
+    {
+        if (request is null)
+        {
+            return BadRequest(new { error = "Request body is required" });
+        }
+
+        try
+        {
+            var result = _userService.ToggleAdmin(userId, request.IsAdmin);
+            if (!result)
+            {
+                return NotFound(new { error = "User not found" });
+            }
+
+            return Ok(new
+            {
+                message = $"User admin status updated to {request.IsAdmin}",
+                isAdmin = request.IsAdmin
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPut("{userId}/status")]
+    public IActionResult ToggleStatus(string userId, [FromBody] ToggleStatusRequest? request)
+    {
+        if (request is null)
+        {
+            return BadRequest(new { error = "Request body is required" });
+        }
+
+        try
+        {
+            var result = _userService.ToggleStatus(userId, request.IsActive);
+            if (!result)
+            {
+                return NotFound(new { error = "User not found" });
+            }
+
+            return Ok(new
+            {
+                message = $"User account {(request.IsActive ? "activated" : "deactivated")}",
+                isActive = request.IsActive
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpDelete("{userId}")]
     public IActionResult Delete(string userId)
     {
@@ -136,17 +192,51 @@ public class UserController : ControllerBase
     }
 }
 
-public record RegisterUserRequest(
-    [property: JsonPropertyName("name")] string? Name,
-    [property: JsonPropertyName("email")] string? Email,
-    [property: JsonPropertyName("org")] string? Organization,
-    [property: JsonPropertyName("password")] string? Password);
+// Request/Response Classes
+public class RegisterUserRequest
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 
-public record LoginRequest(
-    [property: JsonPropertyName("email")] string? Email,
-    [property: JsonPropertyName("password")] string? Password);
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
 
-public record UpdateUserRequest(
-    [property: JsonPropertyName("name")] string? Name,
-    [property: JsonPropertyName("organization")] string? Organization,
-    [property: JsonPropertyName("password")] string? Password);
+    [JsonPropertyName("org")]
+    public string? Organization { get; set; }
+
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
+}
+
+public class LoginRequest
+{
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
+
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
+}
+
+public class UpdateUserRequest
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("organization")]
+    public string? Organization { get; set; }
+
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
+}
+
+public class ToggleAdminRequest
+{
+    [JsonPropertyName("isAdmin")]
+    public bool IsAdmin { get; set; }
+}
+
+public class ToggleStatusRequest
+{
+    [JsonPropertyName("isActive")]
+    public bool IsActive { get; set; }
+}
