@@ -1,6 +1,6 @@
 (function () {
 	/**
-	 * api.js – browser-friendly API bridge that mirrors the UI in index.html.
+	 * api.js â€“ browser-friendly API bridge that mirrors the UI in index.html.
 	 * It exposes a single global `BotAPI` object so regular <script> tags
 	 * (no modules) can access chat/STT/TTS helpers.
 	 */
@@ -116,15 +116,45 @@
 			return { transcript: `Mock transcript captured at ${ts}` };
 		}
 		
-		const form = new FormData();
-		form.append('audio', audioBlob, 'speech.webm');
-		const apiBase = getApiBase();
-		const res = await fetch(`${apiBase}/api/stt`, {
-			method: 'POST',
-			body: form,
-		});
-		const data = await ensureOk(res, 'STT').json();
-		return { transcript: data.transcript ?? '' };
+		try {
+			const form = new FormData();
+			form.append('audio', audioBlob, 'speech.webm');
+			const apiBase = getApiBase();
+			
+			console.log('Sending audio to STT:', {
+				size: audioBlob.size,
+				type: audioBlob.type,
+				url: `${apiBase}/api/stt`
+			});
+			
+			const res = await fetch(`${apiBase}/api/stt`, {
+				method: 'POST',
+				body: form,
+			});
+			
+			console.log('STT response status:', res.status);
+			
+			if (!res.ok) {
+				const errorText = await res.text();
+				console.error('STT error response:', errorText);
+				throw new Error(`STT failed with status ${res.status}: ${errorText}`);
+			}
+			
+			const data = await res.json();
+			console.log('STT response data:', JSON.stringify(data));
+			console.log('Transcript value:', data.transcript);
+			console.log('Transcript type:', typeof data.transcript);
+			
+			if (!data.transcript || data.transcript.trim() === '') {
+				console.warn('Empty transcript received from API');
+				throw new Error('No transcript returned from speech recognition service');
+			}
+			
+			return { transcript: data.transcript };
+		} catch (error) {
+			console.error('STT request failed:', error);
+			throw error;
+		}
 	}
 
 	async function tts(text) {

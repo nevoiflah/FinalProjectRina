@@ -35,6 +35,8 @@ public class OpenAiSpeechProvider : ISpeechProvider
         await audioStream.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
 
+        Console.WriteLine($"[STT] Audio size: {memoryStream.Length} bytes");
+
         // Add audio file
         var audioContent = new StreamContent(memoryStream);
         audioContent.Headers.ContentType = new MediaTypeHeaderValue("audio/webm");
@@ -43,13 +45,31 @@ public class OpenAiSpeechProvider : ISpeechProvider
         // Add model parameter
         content.Add(new StringContent("whisper-1"), "model");
 
+        Console.WriteLine($"[STT] Sending request to OpenAI Whisper API");
+        
         var response = await _httpClient.PostAsync(url, content);
-        response.EnsureSuccessStatusCode();
-
+        
+        Console.WriteLine($"[STT] Response status: {response.StatusCode}");
+        
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<WhisperResponse>(jsonResponse);
+        Console.WriteLine($"[STT] Response content: {jsonResponse}");
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"OpenAI API error: {jsonResponse}");
+        }
 
-        return result?.Text ?? throw new InvalidOperationException("No transcription returned");
+        var result = JsonSerializer.Deserialize<WhisperResponse>(jsonResponse);
+        
+        Console.WriteLine($"[STT] Deserialized text: '{result?.Text}'");
+
+        if (string.IsNullOrWhiteSpace(result?.Text))
+        {
+            Console.WriteLine($"[STT] Warning: Empty transcript received");
+            return string.Empty;
+        }
+
+        return result.Text;
     }
 
     public async Task<SpeechSynthesisResult> SynthesizeAsync(string text)
@@ -76,6 +96,7 @@ public class OpenAiSpeechProvider : ISpeechProvider
 
     private class WhisperResponse
     {
+        [System.Text.Json.Serialization.JsonPropertyName("text")]
         public string Text { get; set; } = string.Empty;
     }
 }

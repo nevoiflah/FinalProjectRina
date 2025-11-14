@@ -1,6 +1,6 @@
 (() => {
 	/**
-	 * script.js — shared helpers aligned with the current chat UI.
+	 * script.js â€” shared helpers aligned with the current chat UI.
 	 * Exposes `window.ChatUtils` containing:
 	 *  - appendMessage / createMessageElement DOM helpers
 	 *  - scrollToBottom utility
@@ -105,19 +105,43 @@
 
 		async handleStop() {
 			try {
-				if (!this.audioChunks.length) return;
+				if (!this.audioChunks.length) {
+					console.warn('No audio chunks recorded');
+					return;
+				}
+				
 				const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-				const result = await window.BotAPI?.stt(audioBlob);
-				if (result?.transcript) {
+				console.log('Audio recorded:', {
+					size: audioBlob.size,
+					type: audioBlob.type,
+					chunks: this.audioChunks.length
+				});
+				
+				if (!window.BotAPI?.stt) {
+					console.error('BotAPI.stt is not available');
+					alert('Speech-to-text service is not available. Please check your setup.');
+					return;
+				}
+				
+				const result = await window.BotAPI.stt(audioBlob);
+				console.log('STT result:', JSON.stringify(result));
+				console.log('Transcript from result:', result?.transcript);
+				
+				if (result?.transcript && result.transcript.trim() !== '') {
+					console.log('Valid transcript received, calling onTranscription');
 					if (typeof this.onTranscription === 'function') {
 						this.onTranscription(result.transcript);
 					} else if (this.inputEl) {
 						this.inputEl.value = result.transcript;
+						this.inputEl.focus();
 					}
+				} else {
+					console.warn('No valid transcript in result. Result:', result);
+					alert('No speech detected or transcript was empty. Please try speaking again more clearly.');
 				}
 			} catch (err) {
 				console.error('STT failed:', err);
-				alert('Could not transcribe the audio. Please try again.');
+				alert(`Could not transcribe the audio: ${err.message}\n\nPlease check the console for details.`);
 			} finally {
 				this.cleanup();
 			}
