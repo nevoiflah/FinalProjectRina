@@ -1611,3 +1611,255 @@ html, body {
 		padding: 16px;
 	}
 }
+/* Conversation Mode Styles */
+.conversation-indicator {
+	position: fixed;
+	bottom: 90px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(102, 126, 234, 0.95);
+	backdrop-filter: blur(10px);
+	padding: 16px 24px;
+	border-radius: 24px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	z-index: 900;
+	animation: slideUpFade 0.4s ease-out;
+}
+
+.conversation-indicator.fade-out {
+	animation: slideDownFade 0.3s ease-out forwards;
+}
+
+.conversation-animation {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.wave-bars {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	height: 24px;
+}
+
+.wave-bar {
+	width: 3px;
+	height: 8px;
+	background: white;
+	border-radius: 2px;
+	animation: wavePulse 1.2s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(1) { animation-delay: 0s; }
+.wave-bar:nth-child(2) { animation-delay: 0.1s; }
+.wave-bar:nth-child(3) { animation-delay: 0.2s; }
+.wave-bar:nth-child(4) { animation-delay: 0.3s; }
+.wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+.conversation-animation.listening .wave-bar {
+	animation: wavePulse 1.2s ease-in-out infinite;
+}
+
+.conversation-animation.active .wave-bar {
+	animation: waveActive 0.6s ease-in-out infinite;
+	background: #4ade80;
+}
+
+.conversation-animation.processing .wave-bar {
+	animation: waveProcessing 0.8s ease-in-out infinite;
+	background: #fbbf24;
+}
+
+.conversation-animation.thinking .wave-bar {
+	animation: waveThinking 1s ease-in-out infinite;
+	background: #a78bfa;
+}
+
+.conversation-animation.speaking .wave-bar {
+	animation: waveSpeaking 0.5s ease-in-out infinite;
+	background: #60a5fa;
+}
+
+.conversation-animation.waiting .wave-bar {
+	animation: waveWaiting 1.5s ease-in-out infinite;
+	opacity: 0.6;
+}
+
+.conversation-status-text {
+	color: white;
+	font-size: 14px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+@keyframes wavePulse {
+	0%, 100% {
+		height: 8px;
+	}
+	50% {
+		height: 20px;
+	}
+}
+
+@keyframes waveActive {
+	0%, 100% {
+		height: 8px;
+	}
+	50% {
+		height: 24px;
+	}
+}
+
+@keyframes waveProcessing {
+	0%, 100% {
+		height: 12px;
+		transform: scaleY(1);
+	}
+	50% {
+		height: 16px;
+		transform: scaleY(1.2);
+	}
+}
+
+@keyframes waveThinking {
+	0%, 100% {
+		height: 10px;
+		opacity: 0.7;
+	}
+	50% {
+		height: 18px;
+		opacity: 1;
+	}
+}
+
+@keyframes waveSpeaking {
+	0%, 100% {
+		height: 6px;
+	}
+	50% {
+		height: 22px;
+	}
+}
+
+@keyframes waveWaiting {
+	0%, 100% {
+		height: 8px;
+		opacity: 0.4;
+	}
+	50% {
+		height: 12px;
+		opacity: 0.7;
+	}
+}
+
+@keyframes slideUpFade {
+	from {
+		opacity: 0;
+		transform: translateX(-50%) translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(-50%) translateY(0);
+	}
+}
+
+@keyframes slideDownFade {
+	from {
+		opacity: 1;
+		transform: translateX(-50%) translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateX(-50%) translateY(20px);
+	}
+}
+
+/* Conversation Mode Notification */
+.conversation-mode-notification {
+	background: rgba(102, 126, 234, 0.1);
+	border: 1px solid rgba(102, 126, 234, 0.3);
+	border-radius: 12px;
+	padding: 16px;
+	margin: 16px 0;
+	animation: fadeIn 0.4s ease-out;
+	transition: opacity 0.3s ease;
+}
+
+.notification-content {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.notification-icon {
+	flex-shrink: 0;
+	width: 40px;
+	height: 40px;
+	background: rgba(102, 126, 234, 0.2);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #667eea;
+}
+
+.notification-text {
+	flex: 1;
+}
+
+.notification-text strong {
+	display: block;
+	font-size: 15px;
+	font-weight: 600;
+	color: #1a1a1a;
+	margin-bottom: 4px;
+}
+
+.notification-text p {
+	font-size: 13px;
+	color: #666;
+	margin: 0;
+}
+
+/* Responsive conversation indicator */
+@media (max-width: 768px) {
+	.conversation-indicator {
+		bottom: 80px;
+		padding: 12px 20px;
+		border-radius: 20px;
+	}
+
+	.conversation-status-text {
+		font-size: 13px;
+	}
+
+	.wave-bars {
+		height: 20px;
+	}
+}
+
+@media (max-width: 480px) {
+	.conversation-indicator {
+		bottom: 75px;
+		padding: 10px 16px;
+		gap: 12px;
+	}
+
+	.conversation-status-text {
+		font-size: 12px;
+	}
+
+	.wave-bar {
+		width: 2px;
+	}
+
+	.notification-content {
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+}

@@ -13,7 +13,7 @@
 				return;
 			}
 
-			// TTS is disabled by default - users won't hear beeps after each message
+			// TTS is disabled by default
 			this.ttsEnabled = false;
 
 			this.voiceController = this.createVoiceController();
@@ -52,7 +52,6 @@
 				micButton: this.refs.micBtn,
 				indicatorEl: this.refs.recordingIndicator,
 				inputEl: this.refs.messageInput,
-				// Changed: Put transcription in input field for review/edit instead of auto-sending
 				onTranscription: (text) => this.handleVoiceTranscription(text),
 			});
 		}
@@ -72,10 +71,16 @@
 			});
 
 			if (micBtn && this.voiceController) {
-				micBtn.addEventListener('click', () => this.voiceController.toggle());
+				micBtn.addEventListener('click', () => {
+					// In conversation mode, manual mic click should work differently
+					if (this.conversationState?.isActive) {
+						// Let conversation mode handle it
+						return;
+					}
+					this.voiceController.toggle();
+				});
 			}
 
-			// Toggle TTS on/off
 			if (ttsToggle) {
 				ttsToggle.addEventListener('click', () => this.toggleTts());
 			}
@@ -83,18 +88,337 @@
 
 		toggleTts() {
 			this.ttsEnabled = !this.ttsEnabled;
-			const { ttsToggle } = this.refs;
+			const { ttsToggle, chatScreen } = this.refs;
+			
 			if (ttsToggle) {
 				ttsToggle.classList.toggle('active', this.ttsEnabled);
 				ttsToggle.setAttribute('aria-pressed', String(this.ttsEnabled));
-				ttsToggle.title = this.ttsEnabled ? 'Voice responses ON' : 'Voice responses OFF';
+				ttsToggle.title = this.ttsEnabled ? 'Conversation mode ON' : 'Conversation mode OFF';
 				
-				// Visual feedback
 				const icon = ttsToggle.querySelector('svg');
 				if (icon) {
 					icon.style.opacity = this.ttsEnabled ? '1' : '0.5';
 				}
 			}
+
+			if (this.ttsEnabled) {
+				chatScreen?.classList.add('conversation-mode');
+				this.startConversationMode();
+			} else {
+				chatScreen?.classList.remove('conversation-mode');
+				this.stopConversationMode();
+			}
+		}
+
+		startConversationMode() {
+			console.log('[Conversation] Starting human-like conversation mode');
+			
+			// Show notification
+			this.showConversationModeNotification();
+			
+			// Initialize state
+			this.conversationState = {
+				isActive: true,
+				isListening: false,
+				isSpeaking: false,
+				audioContext: null,
+				analyser: null,
+				silenceTimer: null,
+				waitTimer: null,
+				silenceThreshold: 1500,
+				waitAfterResponse: 2500,
+			};
+
+			// Create visual indicator
+			this.createConversationIndicator();
+			
+			// Start listening after brief delay
+			setTimeout(() => this.beginListening(), 1000);
+		}
+
+		stopConversationMode() {
+			console.log('[Conversation] Stopping conversation mode');
+			
+			if (this.conversationState) {
+				this.conversationState.isActive = false;
+				
+				if (this.conversationState.silenceTimer) {
+					clearTimeout(this.conversationState.silenceTimer);
+				}
+				if (this.conversationState.waitTimer) {
+					clearTimeout(this.conversationState.waitTimer);
+				}
+				if (this.conversationState.audioContext) {
+					this.conversationState.audioContext.close();
+				}
+			}
+
+			if (this.voiceController?.isRecording) {
+				this.voiceController.stop();
+			}
+
+			this.removeConversationIndicator();
+		}
+
+		showConversationModeNotification() {
+			const notification = document.createElement('div');
+			notification.className = 'conversation-mode-notification';
+			notification.innerHTML = `
+				<div class="notification-content">
+					<div class="notification-icon">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+							<path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+							<line x1="12" y1="19" x2="12" y2="22"></line>
+						</svg>
+					</div>
+					<div class="notification-text">
+						<strong>Conversation Mode Active</strong>
+						<p>Speak naturally - I'll listen and respond with voice</p>
+					</div>
+				</div>
+			`;
+			
+			this.refs.chatMessages.appendChild(notification);
+			window.ChatUtils.scrollToBottom(this.refs.chatMessages);
+			
+			setTimeout(() => {
+				notification.style.opacity = '0';
+				setTimeout(() => notification.remove(), 300);
+			}, 4000);
+		}
+
+		createConversationIndicator() {
+			const existing = document.getElementById('conversationIndicator');
+			if (existing) existing.remove();
+
+			const indicator = document.createElement('div');
+			indicator.id = 'conversationIndicator';
+			indicator.className = 'conversation-indicator';
+			indicator.innerHTML = `
+				<div class="conversation-animation">
+					<div class="wave-bars">
+						<span class="wave-bar"></span>
+						<span class="wave-bar"></span>
+						<span class="wave-bar"></span>
+						<span class="wave-bar"></span>
+						<span class="wave-bar"></span>
+					</div>
+				</div>
+				<div class="conversation-status-text">Listening...</div>
+			`;
+			
+			this.refs.chatScreen.querySelector('.chat-container').appendChild(indicator);
+		}
+
+		removeConversationIndicator() {
+			const indicator = document.getElementById('conversationIndicator');
+			if (indicator) {
+				indicator.classList.add('fade-out');
+				setTimeout(() => indicator.remove(), 300);
+			}
+		}
+
+		updateConversationStatus(status, state = 'listening') {
+			const statusText = document.querySelector('.conversation-status-text');
+			const animation = document.querySelector('.conversation-animation');
+			
+			if (statusText) statusText.textContent = status;
+			if (animation) {
+				animation.className = 'conversation-animation ' + state;
+			}
+		}
+
+		async beginListening() {
+			if (!this.conversationState?.isActive) return;
+			if (this.conversationState.isSpeaking) return;
+
+			console.log('[Conversation] Begin listening');
+			this.conversationState.isListening = true;
+			this.updateConversationStatus('Listening... speak now', 'listening');
+
+			if (this.voiceController) {
+				this.voiceController.onTranscription = async (text) => {
+					await this.handleConversationTranscript(text);
+				};
+
+				await this.voiceController.start();
+				this.setupVoiceActivityDetection();
+			}
+		}
+
+		setupVoiceActivityDetection() {
+			if (!this.voiceController?.stream) return;
+
+			try {
+				const AudioContext = window.AudioContext || window.webkitAudioContext;
+				this.conversationState.audioContext = new AudioContext();
+				
+				const source = this.conversationState.audioContext.createMediaStreamSource(
+					this.voiceController.stream
+				);
+				
+				this.conversationState.analyser = this.conversationState.audioContext.createAnalyser();
+				this.conversationState.analyser.fftSize = 512;
+				source.connect(this.conversationState.analyser);
+
+				this.monitorVoiceActivity();
+				
+			} catch (err) {
+				console.warn('[Conversation] Voice detection setup failed:', err);
+				this.startSimpleSilenceTimer();
+			}
+		}
+
+		monitorVoiceActivity() {
+			if (!this.conversationState?.isActive || !this.conversationState?.isListening) return;
+
+			const analyser = this.conversationState.analyser;
+			if (!analyser) return;
+
+			const dataArray = new Uint8Array(analyser.frequencyBinCount);
+			let lastSoundTime = Date.now();
+			let soundDetected = false;
+
+			const checkAudio = () => {
+				if (!this.conversationState?.isActive || !this.conversationState?.isListening) return;
+
+				analyser.getByteFrequencyData(dataArray);
+				const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+				
+				if (average > 30) {
+					lastSoundTime = Date.now();
+					if (!soundDetected) {
+						soundDetected = true;
+						console.log('[Conversation] Voice detected');
+						this.updateConversationStatus('Listening to you...', 'active');
+					}
+					
+					if (this.conversationState.silenceTimer) {
+						clearTimeout(this.conversationState.silenceTimer);
+						this.conversationState.silenceTimer = null;
+					}
+				} else if (soundDetected) {
+					const silenceDuration = Date.now() - lastSoundTime;
+					
+					if (silenceDuration > this.conversationState.silenceThreshold) {
+						console.log('[Conversation] Silence detected, processing');
+						this.finishListening();
+						return;
+					}
+				}
+
+				requestAnimationFrame(checkAudio);
+			};
+
+			checkAudio();
+		}
+
+		startSimpleSilenceTimer() {
+			this.conversationState.silenceTimer = setTimeout(() => {
+				if (this.conversationState?.isListening) {
+					this.finishListening();
+				}
+			}, 3000);
+		}
+
+		finishListening() {
+			if (!this.conversationState?.isListening) return;
+
+			console.log('[Conversation] Finishing listening');
+			this.conversationState.isListening = false;
+			this.updateConversationStatus('Processing...', 'processing');
+
+			if (this.voiceController?.isRecording) {
+				this.voiceController.stop();
+			}
+		}
+
+		async handleConversationTranscript(text) {
+			if (!text || !this.conversationState?.isActive) return;
+
+			console.log('[Conversation] Transcript:', text);
+			
+			if (this.conversationState.silenceTimer) {
+				clearTimeout(this.conversationState.silenceTimer);
+			}
+
+			if (this.conversationState.audioContext) {
+				this.conversationState.audioContext.close();
+				this.conversationState.audioContext = null;
+			}
+
+			this.addMessage(text, 'user');
+			this.updateConversationStatus('Thinking...', 'thinking');
+
+			await this.processConversationMessage(text);
+		}
+
+		async processConversationMessage(text) {
+			if (!this.conversationState?.isActive) return;
+
+			this.showTypingIndicator();
+
+			try {
+				const { reply } = await window.BotAPI.chat(text);
+				this.lastBotReply = reply || "I'm sorry, I didn't catch that.";
+				
+				this.hideTypingIndicator();
+				this.addMessage(this.lastBotReply, 'bot');
+
+				await this.speakConversationResponse(this.lastBotReply);
+				this.waitForNextConversationInput();
+
+			} catch (err) {
+				console.error('[Conversation] Error:', err);
+				this.hideTypingIndicator();
+				this.addMessage('Something went wrong. Please try again.', 'bot');
+				this.waitForNextConversationInput();
+			}
+		}
+
+		async speakConversationResponse(text) {
+			if (!this.conversationState?.isActive) return;
+
+			console.log('[Conversation] Speaking response');
+			this.conversationState.isSpeaking = true;
+			this.updateConversationStatus('Speaking...', 'speaking');
+
+			try {
+				const audioBlob = await window.BotAPI.tts(text);
+				const url = URL.createObjectURL(audioBlob);
+				this.refs.ttsAudio.src = url;
+				
+				await new Promise((resolve) => {
+					this.refs.ttsAudio.onended = () => {
+						console.log('[Conversation] Finished speaking');
+						resolve();
+					};
+					this.refs.ttsAudio.onerror = resolve;
+					this.refs.ttsAudio.play().catch((err) => {
+						console.warn('[Conversation] Play failed:', err);
+						resolve();
+					});
+				});
+
+			} catch (err) {
+				console.warn('[Conversation] TTS failed:', err);
+			} finally {
+				this.conversationState.isSpeaking = false;
+			}
+		}
+
+		waitForNextConversationInput() {
+			if (!this.conversationState?.isActive) return;
+
+			console.log('[Conversation] Waiting for next input');
+			this.updateConversationStatus('Your turn... (speak or type)', 'waiting');
+
+			this.conversationState.waitTimer = setTimeout(() => {
+				if (this.conversationState?.isActive) {
+					this.beginListening();
+				}
+			}, this.conversationState.waitAfterResponse);
 		}
 
 		loadCurrentUser() {
@@ -137,6 +461,13 @@
 
 		backToStart() {
 			const { startScreen, chatScreen, messageInput } = this.refs;
+			
+			// Stop conversation mode if active
+			if (this.ttsEnabled) {
+				this.ttsEnabled = false;
+				this.stopConversationMode();
+			}
+			
 			chatScreen.classList.add('fade-out');
 			setTimeout(() => {
 				chatScreen.classList.add('hidden');
@@ -156,18 +487,35 @@
 
 		handleVoiceTranscription(text) {
 			if (!text) return;
-			// NEW BEHAVIOR: Put transcribed text in input field so user can review/edit
-			// before sending. User must click send button or press Enter to actually send.
+			
+			// If in conversation mode, it's handled separately
+			if (this.conversationState?.isActive) return;
+			
+			// Normal mode: put in input field for review
 			this.refs.messageInput.value = text;
 			this.refs.messageInput.focus();
-			
-			// Move cursor to end of text
 			this.refs.messageInput.setSelectionRange(text.length, text.length);
 		}
 
 		handleSend() {
 			const text = this.refs.messageInput.value.trim();
 			if (!text) return;
+			
+			// If in conversation mode, handle as manual input
+			if (this.conversationState?.isActive) {
+				this.refs.messageInput.value = '';
+				// Cancel any wait timer
+				if (this.conversationState.waitTimer) {
+					clearTimeout(this.conversationState.waitTimer);
+				}
+				// Process the typed message
+				this.addMessage(text, 'user');
+				this.updateConversationStatus('Thinking...', 'thinking');
+				this.processConversationMessage(text);
+				return;
+			}
+			
+			// Normal mode
 			this.refs.messageInput.value = '';
 			this.processOutgoingMessage(text);
 		}
@@ -183,8 +531,7 @@
 				this.lastBotReply = reply || "I'm sorry, I didn't catch that.";
 				this.addMessage(this.lastBotReply, 'bot');
 				
-				// Only play TTS if user has enabled it
-				if (this.ttsEnabled) {
+				if (this.ttsEnabled && !this.conversationState) {
 					this.tryPlayTts(this.lastBotReply);
 				}
 			} catch (err) {
@@ -217,17 +564,13 @@
 
 		async tryPlayTts(text) {
 			if (!text || !this.refs.ttsAudio) return;
-			if (window.BotAPI?.mode === 'mock') {
-				// Skip TTS in mock mode
-				return;
-			}
+			if (window.BotAPI?.mode === 'mock') return;
+			
 			try {
 				const audioBlob = await window.BotAPI.tts(text);
 				const url = URL.createObjectURL(audioBlob);
 				this.refs.ttsAudio.src = url;
-				await this.refs.ttsAudio.play().catch(() => {
-					// Autoplay might be blocked; that's okay
-				});
+				await this.refs.ttsAudio.play().catch(() => {});
 			} catch (err) {
 				console.warn('TTS playback failed:', err);
 			}
