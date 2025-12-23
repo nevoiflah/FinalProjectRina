@@ -1,0 +1,31 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Build Artifacts
+**/bin/
+**/obj/
+**/cmake-build-*/
+
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+Server/AI_Service/venv/
+Server/AI_Service/.env
+
+# Visual Studio / IDES
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archives
+*.zip
+*.tar.gz
+FinalProjectRina.zip
+
+# Logs
+*.log

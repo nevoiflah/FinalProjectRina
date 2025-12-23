@@ -32,7 +32,7 @@ public class ChatController : ControllerBase
 
         try
         {
-            var reply = await _chatService.GenerateReplyAsync(request.Message);
+            var reply = await _chatService.GenerateReplyAsync(request.Message, request.UserId);
             return Ok(new { reply });
         }
         catch (ArgumentException ex)

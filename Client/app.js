@@ -1,9 +1,17 @@
 (() => {
-	const INITIAL_BOT_MESSAGE = "Hello! I'm your AI assistant. Type a message or use the microphone button to speak with me. How can I help you today?";
+	const INITIAL_BOT_MESSAGE = "Welcome to Ruppin Academic Center!<br>I'm your personal Academic Advisor. I can help you check eligibility, find the right degree, or explain our preparatory programs.<br><br>How can I help you today?";
 	const TRANSITION_MS = 300;
+
+	// Logic to fetch initial message dynamically
+	function getInitialMessage() {
+		return window.langManager ?
+			window.langManager.getText('initial_message') :
+			"Welcome to Ruppin Academic Center!<br>I'm your personal Academic Advisor. I can help you check eligibility, find the right degree, or explain our preparatory programs.<br><br>How can I help you today?";
+	}
 
 	class ChatApp {
 		constructor() {
+			// ... existing setup ...
 			this.refs = this.cacheElements();
 			if (!this.refs) return;
 
@@ -18,7 +26,16 @@
 
 			this.voiceController = this.createVoiceController();
 			this.bindEvents();
-			this.resetConversation();
+
+			// Wait for LanguageManager to be ready before resetting conversation
+			setTimeout(() => {
+				this.resetConversation();
+			}, 100);
+
+			// Listen for language changes
+			window.addEventListener('languageChanged', () => {
+				this.resetConversation();
+			});
 		}
 
 		cacheElements() {
@@ -40,7 +57,7 @@
 				.filter(([, el]) => !el)
 				.map(([key]) => key);
 			if (missing.length) {
-				console.error(`ChatApp initialization failed – missing elements: ${missing.join(', ')}`);
+				console.error(`ChatApp initialization failed â€“ missing elements: ${missing.join(', ')}`);
 				return null;
 			}
 			return refs;
@@ -48,12 +65,15 @@
 
 		createVoiceController() {
 			if (!window.ChatUtils?.VoiceInputController) return null;
-			return new window.ChatUtils.VoiceInputController({
+			const controller = new window.ChatUtils.VoiceInputController({
 				micButton: this.refs.micBtn,
 				indicatorEl: this.refs.recordingIndicator,
 				inputEl: this.refs.messageInput,
 				onTranscription: (text) => this.handleVoiceTranscription(text),
 			});
+			// Save the original handler for later restoration
+			this.originalOnTranscription = controller.onTranscription;
+			return controller;
 		}
 
 		bindEvents() {
@@ -84,20 +104,118 @@
 			if (ttsToggle) {
 				ttsToggle.addEventListener('click', () => this.toggleTts());
 			}
+
+			// Logout
+			const logoutBtn = document.getElementById('logoutBtn');
+			if (logoutBtn) {
+				logoutBtn.addEventListener('click', () => {
+					if (confirm(window.langManager ? window.langManager.getText('logout_confirm') : 'Are you sure you want to logout?')) {
+						localStorage.removeItem('chatUser');
+						if (window.LanguageManager) window.LanguageManager.resetToDefault();
+						window.location.replace('login.html');
+					}
+				});
+			}
+
+			// Quick Actions
+			const quickActions = document.querySelectorAll('.chip-btn');
+			quickActions.forEach(btn => {
+				btn.addEventListener('click', () => {
+					const action = btn.dataset.action;
+					this.handleQuickAction(action);
+				});
+			});
+		}
+
+		handleQuickAction(action) {
+			let prompt = "";
+			let userText = "";
+
+			switch (action) {
+				case 'eligibility':
+					userText = "I want to check my eligibility.";
+					prompt = "I want to check if I can get into a degree. What grades do you need from me?";
+					break;
+				case 'discovery':
+					userText = "Help me choose a degree.";
+					prompt = "I'm not sure what to study. Can you help me find a degree based on my hobbies and interests?";
+					break;
+				case 'mechina':
+					userText = "How can I improve my chances?";
+					prompt = "My grades are low. Tell me about the Pre-Academic Preparatory Program (Mechina).";
+					break;
+			}
+
+			if (prompt) {
+				this.addMessage(userText, 'user');
+				this.processOutgoingMessage(prompt, false); // false = don't display prompt as user message
+			}
+		}
+
+		// Updated processOutgoingMessage to optionally skip adding user message (if already added)
+		async processOutgoingMessage(text, displayAsUser = true) {
+			if (!this.ensureAuthenticated()) return;
+
+			if (displayAsUser) {
+				this.addMessage(text, 'user');
+			}
+
+			this.showTypingIndicator();
+			if (this.refs.sendBtn) this.refs.sendBtn.disabled = true;
+
+			try {
+				let payloadText = text;
+				// Inject Language Instruction if specific language is selected
+				if (window.langManager && window.langManager.currentLang === 'he') {
+					payloadText += " (Please respond in Hebrew)";
+				}
+
+				const { reply } = await window.BotAPI.chat(payloadText);
+				this.lastBotReply = reply || "I'm sorry, I didn't catch that.";
+				this.addMessage(this.lastBotReply, 'bot');
+
+				if (this.ttsEnabled && !this.conversationState) {
+					this.tryPlayTts(this.lastBotReply);
+				}
+			} catch (err) {
+				console.error('Chat request failed:', err);
+				this.addMessage('Something went wrong. Please try again.', 'bot');
+			} finally {
+				this.hideTypingIndicator();
+				if (this.refs.sendBtn) this.refs.sendBtn.disabled = false;
+			}
 		}
 
 		toggleTts() {
 			this.ttsEnabled = !this.ttsEnabled;
 			const { ttsToggle, chatScreen } = this.refs;
-			
+			const inputArea = document.querySelector('.chat-input-area');
+
 			if (ttsToggle) {
 				ttsToggle.classList.toggle('active', this.ttsEnabled);
 				ttsToggle.setAttribute('aria-pressed', String(this.ttsEnabled));
-				ttsToggle.title = this.ttsEnabled ? 'Conversation mode ON' : 'Conversation mode OFF';
-				
+				ttsToggle.title = this.ttsEnabled ? 'Exit conversation mode' : 'Conversation mode OFF';
+
 				const icon = ttsToggle.querySelector('svg');
 				if (icon) {
-					icon.style.opacity = this.ttsEnabled ? '1' : '0.5';
+					if (this.ttsEnabled) {
+						// Change to back arrow
+						icon.innerHTML = '<line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>';
+						icon.style.opacity = '1';
+					} else {
+						// Change back to speaker icon
+						icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>';
+						icon.style.opacity = '0.5';
+					}
+				}
+			}
+
+			// Hide/show input wrapper
+			if (inputArea) {
+				if (this.ttsEnabled) {
+					inputArea.classList.add('hidden-for-conversation');
+				} else {
+					inputArea.classList.remove('hidden-for-conversation');
 				}
 			}
 
@@ -112,10 +230,10 @@
 
 		startConversationMode() {
 			console.log('[Conversation] Starting human-like conversation mode');
-			
+
 			// Show notification
 			this.showConversationModeNotification();
-			
+
 			// Initialize state
 			this.conversationState = {
 				isActive: true,
@@ -131,17 +249,17 @@
 
 			// Create visual indicator
 			this.createConversationIndicator();
-			
+
 			// Start listening after brief delay
 			setTimeout(() => this.beginListening(), 1000);
 		}
 
 		stopConversationMode() {
 			console.log('[Conversation] Stopping conversation mode');
-			
+
 			if (this.conversationState) {
 				this.conversationState.isActive = false;
-				
+
 				if (this.conversationState.silenceTimer) {
 					clearTimeout(this.conversationState.silenceTimer);
 				}
@@ -155,6 +273,11 @@
 
 			if (this.voiceController?.isRecording) {
 				this.voiceController.stop();
+			}
+
+			// Restore the original onTranscription handler
+			if (this.voiceController && this.originalOnTranscription) {
+				this.voiceController.onTranscription = this.originalOnTranscription;
 			}
 
 			this.removeConversationIndicator();
@@ -178,10 +301,10 @@
 					</div>
 				</div>
 			`;
-			
+
 			this.refs.chatMessages.appendChild(notification);
 			window.ChatUtils.scrollToBottom(this.refs.chatMessages);
-			
+
 			setTimeout(() => {
 				notification.style.opacity = '0';
 				setTimeout(() => notification.remove(), 300);
@@ -207,7 +330,7 @@
 				</div>
 				<div class="conversation-status-text">Listening...</div>
 			`;
-			
+
 			this.refs.chatScreen.querySelector('.chat-container').appendChild(indicator);
 		}
 
@@ -222,7 +345,7 @@
 		updateConversationStatus(status, state = 'listening') {
 			const statusText = document.querySelector('.conversation-status-text');
 			const animation = document.querySelector('.conversation-animation');
-			
+
 			if (statusText) statusText.textContent = status;
 			if (animation) {
 				animation.className = 'conversation-animation ' + state;
@@ -253,17 +376,17 @@
 			try {
 				const AudioContext = window.AudioContext || window.webkitAudioContext;
 				this.conversationState.audioContext = new AudioContext();
-				
+
 				const source = this.conversationState.audioContext.createMediaStreamSource(
 					this.voiceController.stream
 				);
-				
+
 				this.conversationState.analyser = this.conversationState.audioContext.createAnalyser();
 				this.conversationState.analyser.fftSize = 512;
 				source.connect(this.conversationState.analyser);
 
 				this.monitorVoiceActivity();
-				
+
 			} catch (err) {
 				console.warn('[Conversation] Voice detection setup failed:', err);
 				this.startSimpleSilenceTimer();
@@ -285,7 +408,7 @@
 
 				analyser.getByteFrequencyData(dataArray);
 				const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-				
+
 				if (average > 30) {
 					lastSoundTime = Date.now();
 					if (!soundDetected) {
@@ -293,14 +416,14 @@
 						console.log('[Conversation] Voice detected');
 						this.updateConversationStatus('Listening to you...', 'active');
 					}
-					
+
 					if (this.conversationState.silenceTimer) {
 						clearTimeout(this.conversationState.silenceTimer);
 						this.conversationState.silenceTimer = null;
 					}
 				} else if (soundDetected) {
 					const silenceDuration = Date.now() - lastSoundTime;
-					
+
 					if (silenceDuration > this.conversationState.silenceThreshold) {
 						console.log('[Conversation] Silence detected, processing');
 						this.finishListening();
@@ -338,7 +461,7 @@
 			if (!text || !this.conversationState?.isActive) return;
 
 			console.log('[Conversation] Transcript:', text);
-			
+
 			if (this.conversationState.silenceTimer) {
 				clearTimeout(this.conversationState.silenceTimer);
 			}
@@ -362,7 +485,7 @@
 			try {
 				const { reply } = await window.BotAPI.chat(text);
 				this.lastBotReply = reply || "I'm sorry, I didn't catch that.";
-				
+
 				this.hideTypingIndicator();
 				this.addMessage(this.lastBotReply, 'bot');
 
@@ -388,7 +511,7 @@
 				const audioBlob = await window.BotAPI.tts(text);
 				const url = URL.createObjectURL(audioBlob);
 				this.refs.ttsAudio.src = url;
-				
+
 				await new Promise((resolve) => {
 					this.refs.ttsAudio.onended = () => {
 						console.log('[Conversation] Finished speaking');
@@ -461,13 +584,13 @@
 
 		backToStart() {
 			const { startScreen, chatScreen, messageInput } = this.refs;
-			
+
 			// Stop conversation mode if active
 			if (this.ttsEnabled) {
 				this.ttsEnabled = false;
 				this.stopConversationMode();
 			}
-			
+
 			chatScreen.classList.add('fade-out');
 			setTimeout(() => {
 				chatScreen.classList.add('hidden');
@@ -479,18 +602,20 @@
 		}
 
 		resetConversation() {
+			if (!this.refs.chatMessages) return;
 			this.refs.chatMessages.innerHTML = '';
-			this.addMessage(INITIAL_BOT_MESSAGE, 'bot');
+			const msg = getInitialMessage();
+			this.addMessage(msg, 'bot');
 			this.typingIndicator = null;
-			this.lastBotReply = INITIAL_BOT_MESSAGE;
+			this.lastBotReply = msg;
 		}
 
 		handleVoiceTranscription(text) {
 			if (!text) return;
-			
+
 			// If in conversation mode, it's handled separately
 			if (this.conversationState?.isActive) return;
-			
+
 			// Normal mode: put in input field for review
 			this.refs.messageInput.value = text;
 			this.refs.messageInput.focus();
@@ -500,7 +625,7 @@
 		handleSend() {
 			const text = this.refs.messageInput.value.trim();
 			if (!text) return;
-			
+
 			// If in conversation mode, handle as manual input
 			if (this.conversationState?.isActive) {
 				this.refs.messageInput.value = '';
@@ -514,34 +639,14 @@
 				this.processConversationMessage(text);
 				return;
 			}
-			
+
 			// Normal mode
 			this.refs.messageInput.value = '';
 			this.processOutgoingMessage(text);
 		}
 
-		async processOutgoingMessage(text) {
-			if (!this.ensureAuthenticated()) return;
-			this.addMessage(text, 'user');
-			this.showTypingIndicator();
-			this.refs.sendBtn.disabled = true;
+		// Logic merged into processOutgoingMessage above
 
-			try {
-				const { reply } = await window.BotAPI.chat(text);
-				this.lastBotReply = reply || "I'm sorry, I didn't catch that.";
-				this.addMessage(this.lastBotReply, 'bot');
-				
-				if (this.ttsEnabled && !this.conversationState) {
-					this.tryPlayTts(this.lastBotReply);
-				}
-			} catch (err) {
-				console.error('Chat request failed:', err);
-				this.addMessage('Something went wrong. Please try again.', 'bot');
-			} finally {
-				this.hideTypingIndicator();
-				this.refs.sendBtn.disabled = false;
-			}
-		}
 
 		showTypingIndicator() {
 			if (this.typingIndicator) return;
@@ -565,12 +670,12 @@
 		async tryPlayTts(text) {
 			if (!text || !this.refs.ttsAudio) return;
 			if (window.BotAPI?.mode === 'mock') return;
-			
+
 			try {
 				const audioBlob = await window.BotAPI.tts(text);
 				const url = URL.createObjectURL(audioBlob);
 				this.refs.ttsAudio.src = url;
-				await this.refs.ttsAudio.play().catch(() => {});
+				await this.refs.ttsAudio.play().catch(() => { });
 			} catch (err) {
 				console.warn('TTS playback failed:', err);
 			}

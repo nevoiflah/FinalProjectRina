@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Admin Dashboard - Ruppin Advisor</title>
+	<link rel="stylesheet" href="./styles.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<style>
+		.admin-container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 20px;
+		}
+
+		.stats-table {
+			width: 100%;
+			border-collapse: collapse;
+			background: rgba(17, 24, 49, 0.6);
+			backdrop-filter: blur(12px);
+			border-radius: 16px;
+			overflow: hidden;
+			margin-top: 20px;
+		}
+
+		.stats-table th,
+		.stats-table td {
+			padding: 16px;
+			text-align: left;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			color: var(--text-light);
+		}
+
+		.stats-table th {
+			background: rgba(255, 255, 255, 0.05);
+			font-weight: 600;
+			color: var(--text-white);
+		}
+
+		.stats-table tr:hover {
+			background: rgba(255, 255, 255, 0.02);
+		}
+	</style>
+</head>
+
+<body class="auth-page">
+	<div class="admin-container">
+		<header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+			<div>
+				<h1 style="font-size: 24px;">Admin Dashboard</h1>
+				<p style="color: var(--text-light);">User Statistics & Chat History</p>
+			</div>
+			<a href="index.html" class="secondary-btn">Back to Chat</a>
+		</header>
+
+		<div id="loading" style="text-align: center; padding: 40px;">Loading stats...</div>
+
+		<table class="stats-table hidden" id="statsTable">
+			<thead>
+				<tr>
+					<th>User</th>
+					<th>Email</th>
+					<th>Joined</th>
+					<th>Initial Question</th>
+					<th>Final Result</th>
+				</tr>
+			</thead>
+			<tbody id="statsBody"></tbody>
+		</table>
+	</div>
+
+	<script>
+		(async function () {
+			const raw = localStorage.getItem('chatUser');
+			if (!raw) return window.location.href = 'login.html';
+
+			const user = JSON.parse(raw);
+			// Simple client-side check, real check is on server
+			if (user.email !== 'nevo.iflah6@gmail.com' && !user.isAdmin) {
+				alert('Access Denied. Admins only.');
+				window.location.href = 'index.html';
+				return;
+			}
+
+			try {
+				const res = await fetch(`http://localhost:5000/api/admin/stats?userId=${user.userId}`);
+				if (!res.ok) throw new Error('Failed to load stats');
+
+				const stats = await res.json();
+				const tbody = document.getElementById('statsBody');
+				document.getElementById('loading').classList.add('hidden');
+				document.getElementById('statsTable').classList.remove('hidden');
+
+				tbody.innerHTML = stats.map(s => `
+                    <tr>
+                        <td style="color: white; font-weight: 500;">${s.name}</td>
+                        <td>${s.email}</td>
+                        <td>${new Date(s.joinedAt).toLocaleDateString()}</td>
+                        <td title="${s.firstQuestion}">${s.firstQuestion.substring(0, 50)}${s.firstQuestion.length > 50 ? '...' : ''}</td>
+                        <td title="${s.lastResult}">${s.lastResult.substring(0, 50)}${s.lastResult.length > 50 ? '...' : ''}</td>
+                    </tr>
+                `).join('');
+			} catch (err) {
+				console.error(err);
+				document.getElementById('loading').textContent = 'Error loading stats. Ensure you are an admin.';
+			}
+		})();
+	</script>
+</body>
+
+</html>

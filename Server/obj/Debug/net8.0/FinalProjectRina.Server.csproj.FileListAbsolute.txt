@@ -1,6 +1,5 @@
 /Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/bin/Debug/net8.0/appsettings.Development.json
 /Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/bin/Debug/net8.0/appsettings.json
-/Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/bin/Debug/net8.0/package.json
 /Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/bin/Debug/net8.0/FinalProjectRina.Server.staticwebassets.endpoints.json
 /Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/bin/Debug/net8.0/FinalProjectRina.Server
 /Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/bin/Debug/net8.0/FinalProjectRina.Server.deps.json

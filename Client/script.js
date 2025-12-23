@@ -16,19 +16,26 @@
 		if (sender === 'bot') {
 			const avatar = document.createElement('div');
 			avatar.className = 'message-avatar';
-			avatar.textContent = '🤖';
+			// Ruppin 'R' Avatar
+			avatar.textContent = 'R';
+			avatar.style.background = '#1a365d'; // Ruppin Blue
+			avatar.style.color = '#ffffff';
+			avatar.style.fontWeight = 'bold';
+			avatar.style.fontFamily = 'Arial, sans-serif';
 			wrapper.appendChild(avatar);
 		}
 
 		const content = document.createElement('div');
 		content.className = 'message-content';
-		content.textContent = text;
+		content.innerHTML = text;
 		wrapper.appendChild(content);
 
 		if (sender === 'user') {
 			const avatar = document.createElement('div');
 			avatar.className = 'message-avatar';
-			avatar.textContent = '👤';
+			// Emoji removed
+			// avatar.textContent = '👤';
+			avatar.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
 			wrapper.appendChild(avatar);
 		}
 
@@ -109,24 +116,33 @@
 					console.warn('No audio chunks recorded');
 					return;
 				}
-				
+
 				const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+
+				// Check for minimum audio length (approx < 0.2s check by size)
+				// Low quality webm is ~4KB/s. 0.1s is ~400 bytes. Be safe with 1KB.
+				if (audioBlob.size < 1000) {
+					console.warn('Audio too short:', audioBlob.size);
+					alert('Recording too short. Please hold the button and speak clearly.');
+					return;
+				}
+
 				console.log('Audio recorded:', {
 					size: audioBlob.size,
 					type: audioBlob.type,
 					chunks: this.audioChunks.length
 				});
-				
+
 				if (!window.BotAPI?.stt) {
 					console.error('BotAPI.stt is not available');
 					alert('Speech-to-text service is not available. Please check your setup.');
 					return;
 				}
-				
+
 				const result = await window.BotAPI.stt(audioBlob);
 				console.log('STT result:', JSON.stringify(result));
 				console.log('Transcript from result:', result?.transcript);
-				
+
 				if (result?.transcript && result.transcript.trim() !== '') {
 					console.log('Valid transcript received, calling onTranscription');
 					if (typeof this.onTranscription === 'function') {

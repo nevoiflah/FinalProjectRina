@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,17 +10,22 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body class="auth-page">
 	<div class="auth-shell">
 		<section class="auth-panel auth-hero">
-			<div class="robot-icon">🤖</div>
+			<div class="robot-icon"
+				style="background: #1a365d; color: #ffffff; width: 92px; height: 92px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Arial', sans-serif; font-weight: bold; font-size: 52px; margin-bottom: 20px;">
+				R</div>
 			<h1>AI Robot Assistant</h1>
-			<p>Create natural conversations with voice or text, keep transcripts synced, and let the bot speak back instantly.</p>
+			<p>Create natural conversations with voice or text, keep transcripts synced, and let the bot speak back
+				instantly.</p>
 
 			<div class="auth-badges">
 				<span class="auth-badge">Secure</span>
 				<span class="auth-badge">Voice + Text</span>
-				<span class="auth-badge">24/7 Availability</span>
+				<button id="langToggle" class="auth-badge"
+					style="background: none; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-weight: bold;">EN</button>
 			</div>
 
 			<ul class="auth-benefits">
@@ -38,19 +44,21 @@
 			<form id="loginForm" class="auth-form">
 				<div class="auth-field">
 					<label for="email">Email address</label>
-					<input type="email" id="email" class="message-input" placeholder="ada@example.com" autocomplete="email" required>
+					<input type="email" id="email" class="message-input" placeholder="ada@example.com"
+						autocomplete="email" required>
 				</div>
 
 				<div class="auth-field">
 					<label for="password">Password</label>
-					<input type="password" id="password" class="message-input" placeholder="Enter your password" autocomplete="current-password" required>
+					<input type="password" id="password" class="message-input" placeholder="Enter your password"
+						autocomplete="current-password" required>
 				</div>
 
 				<button type="submit" class="primary-btn">Sign in</button>
 			</form>
 
 			<div class="auth-status" id="loginStatus"></div>
-			
+
 			<div class="auth-links">
 				<span>Don't have an account? <a class="link-btn" href="register.html">Create account</a></span>
 			</div>
@@ -58,6 +66,8 @@
 	</div>
 
 	<script src="./config.js"></script>
+	<script src="./translations.js"></script>
+	<script src="./language.js"></script>
 	<script>
 		(function () {
 			const ChatConfig = window.ChatConfig;
@@ -94,9 +104,9 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(payload),
 				});
-				
+
 				const data = await response.json().catch(() => ({}));
-				
+
 				if (!response.ok) {
 					if (response.status === 405 || response.status === 404) {
 						throw new Error('Cannot connect to server. Please check if the server is running.');
@@ -111,7 +121,7 @@
 
 			form.addEventListener('submit', async (event) => {
 				event.preventDefault();
-				
+
 				const email = document.getElementById('email').value.trim();
 				const password = document.getElementById('password').value;
 
@@ -133,10 +143,10 @@
 
 				try {
 					const user = await login({ email, password });
-					
+
 					// Store user data in localStorage
 					localStorage.setItem('chatUser', JSON.stringify(user));
-					
+
 					setStatus('Login successful! Redirecting...');
 					setTimeout(redirectToChat, 1000);
 				} catch (err) {
@@ -148,4 +158,5 @@
 		})();
 	</script>
 </body>
+
 </html>

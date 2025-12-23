@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,17 +10,22 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body class="auth-page">
 	<div class="auth-shell">
 		<section class="auth-panel auth-hero">
-			<div class="robot-icon">🤖</div>
+			<div class="robot-icon"
+				style="background: #1a365d; color: #ffffff; width: 92px; height: 92px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Arial', sans-serif; font-weight: bold; font-size: 52px; margin-bottom: 20px;">
+				R</div>
 			<h1>Create your secure workspace</h1>
-			<p>Get instant access to voice + text conversations, synced across every device with enterprise-grade privacy.</p>
+			<p>Get instant access to voice + text conversations, synced across every device with enterprise-grade
+				privacy.</p>
 
 			<div class="auth-badges">
 				<span class="auth-badge">SSO-ready</span>
 				<span class="auth-badge">Voice-first</span>
-				<span class="auth-badge">Enterprise</span>
+				<button id="langToggle" class="auth-badge"
+					style="background: none; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-weight: bold;">EN</button>
 			</div>
 
 			<ul class="auth-benefits">
@@ -39,12 +45,14 @@
 				<form id="registerForm" class="auth-form">
 					<div class="auth-field">
 						<label for="regName">Full name</label>
-						<input type="text" id="regName" class="message-input" placeholder="Grace Hopper" autocomplete="name" required>
+						<input type="text" id="regName" class="message-input" placeholder="Grace Hopper"
+							autocomplete="name" required>
 					</div>
 
 					<div class="auth-field">
 						<label for="regEmail">Email address</label>
-						<input type="email" id="regEmail" class="message-input" placeholder="grace@company.com" autocomplete="email" required>
+						<input type="email" id="regEmail" class="message-input" placeholder="grace@company.com"
+							autocomplete="email" required>
 					</div>
 
 					<div class="auth-field">
@@ -54,12 +62,14 @@
 
 					<div class="auth-field">
 						<label for="regPassword">Password</label>
-						<input type="password" id="regPassword" class="message-input" placeholder="At least 6 characters" minlength="6" autocomplete="new-password" required>
+						<input type="password" id="regPassword" class="message-input"
+							placeholder="At least 6 characters" minlength="6" autocomplete="new-password" required>
 					</div>
 
 					<div class="auth-field">
 						<label for="regConfirm">Confirm password</label>
-						<input type="password" id="regConfirm" class="message-input" placeholder="Repeat your password" minlength="6" autocomplete="new-password" required>
+						<input type="password" id="regConfirm" class="message-input" placeholder="Repeat your password"
+							minlength="6" autocomplete="new-password" required>
 					</div>
 
 					<button type="submit" class="primary-btn">Create account</button>
@@ -75,107 +85,110 @@
 	</div>
 
 	<script src="./config.js"></script>
+	<script src="./translations.js"></script>
+	<script src="./language.js"></script>
 	<script>
-	(function () {
-		const ChatConfig = window.ChatConfig;
-		const form = document.getElementById('registerForm');
-		const statusEl = document.getElementById('registerStatus');
-		const subtitle = document.getElementById('registerSubtitle');
-		const submitBtn = form.querySelector('button[type="submit"]');
+		(function () {
+			const ChatConfig = window.ChatConfig;
+			const form = document.getElementById('registerForm');
+			const statusEl = document.getElementById('registerStatus');
+			const subtitle = document.getElementById('registerSubtitle');
+			const submitBtn = form.querySelector('button[type="submit"]');
 
-		function setStatus(msg, isError = false) {
-			statusEl.textContent = msg;
-			statusEl.style.color = isError ? '#ff6b6b' : 'var(--text-light)';
-		}
-
-		function getApiBase() {
-			const base = ChatConfig?.getApiBase() || '';
-			// Default to localhost if not configured
-			return base || 'http://localhost:5000';
-		}
-
-		async function registerUser(payload) {
-			const apiBase = getApiBase();
-			const response = await fetch(`${apiBase}/api/user/register`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload),
-			});
-
-			const data = await response.json().catch(() => ({}));
-			
-			if (!response.ok) {
-				if (response.status === 405 || response.status === 404) {
-					throw new Error('Cannot connect to server. Please check if the server is running.');
-				}
-				if (response.status === 409) {
-					throw new Error('An account with this email already exists.');
-				}
-				throw new Error(data?.error || 'Registration failed. Please try again.');
-			}
-			return data;
-		}
-
-		form.addEventListener('submit', async (event) => {
-			event.preventDefault();
-			
-			const name = document.getElementById('regName').value.trim();
-			const email = document.getElementById('regEmail').value.trim();
-			const org = document.getElementById('regOrg').value.trim();
-			const password = document.getElementById('regPassword').value;
-			const confirm = document.getElementById('regConfirm').value;
-
-			// Validation
-			if (!name || !email || !password) {
-				setStatus('Please fill in all required fields.', true);
-				return;
+			function setStatus(msg, isError = false) {
+				statusEl.textContent = msg;
+				statusEl.style.color = isError ? '#ff6b6b' : 'var(--text-light)';
 			}
 
-			if (password.length < 6) {
-				setStatus('Password must be at least 6 characters long.', true);
-				return;
+			function getApiBase() {
+				const base = ChatConfig?.getApiBase() || '';
+				// Default to localhost if not configured
+				return base || 'http://localhost:5000';
 			}
 
-			if (password !== confirm) {
-				setStatus('Passwords do not match.', true);
-				return;
-			}
-
-			// Email validation
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-			if (!emailRegex.test(email)) {
-				setStatus('Please enter a valid email address.', true);
-				return;
-			}
-
-			submitBtn.disabled = true;
-			setStatus('Creating your account...');
-
-			try {
-				const registered = await registerUser({
-					name,
-					email,
-					org: org || null,
-					password,
+			async function registerUser(payload) {
+				const apiBase = getApiBase();
+				const response = await fetch(`${apiBase}/api/user/register`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
 				});
 
-				// Store user data in localStorage
-				localStorage.setItem('chatUser', JSON.stringify(registered));
-				
-				const userName = registered.name || registered.Name || name;
-				subtitle.textContent = `Welcome aboard, ${userName}!`;
-				setStatus('Account created successfully! Redirecting...');
+				const data = await response.json().catch(() => ({}));
 
-				setTimeout(() => {
-					window.location.href = 'index.html';
-				}, 1000);
-			} catch (err) {
-				setStatus(err.message || 'Registration failed. Please try again.', true);
-			} finally {
-				submitBtn.disabled = false;
+				if (!response.ok) {
+					if (response.status === 405 || response.status === 404) {
+						throw new Error('Cannot connect to server. Please check if the server is running.');
+					}
+					if (response.status === 409) {
+						throw new Error('An account with this email already exists.');
+					}
+					throw new Error(data?.error || 'Registration failed. Please try again.');
+				}
+				return data;
 			}
-		});
-	})();
+
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+
+				const name = document.getElementById('regName').value.trim();
+				const email = document.getElementById('regEmail').value.trim();
+				const org = document.getElementById('regOrg').value.trim();
+				const password = document.getElementById('regPassword').value;
+				const confirm = document.getElementById('regConfirm').value;
+
+				// Validation
+				if (!name || !email || !password) {
+					setStatus('Please fill in all required fields.', true);
+					return;
+				}
+
+				if (password.length < 6) {
+					setStatus('Password must be at least 6 characters long.', true);
+					return;
+				}
+
+				if (password !== confirm) {
+					setStatus('Passwords do not match.', true);
+					return;
+				}
+
+				// Email validation
+				const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+				if (!emailRegex.test(email)) {
+					setStatus('Please enter a valid email address.', true);
+					return;
+				}
+
+				submitBtn.disabled = true;
+				setStatus('Creating your account...');
+
+				try {
+					const registered = await registerUser({
+						name,
+						email,
+						org: org || null,
+						password,
+					});
+
+					// Store user data in localStorage
+					localStorage.setItem('chatUser', JSON.stringify(registered));
+
+					const userName = registered.name || registered.Name || name;
+					subtitle.textContent = `Welcome aboard, ${userName}!`;
+					setStatus('Account created successfully! Redirecting...');
+
+					setTimeout(() => {
+						window.location.href = 'index.html';
+					}, 1000);
+				} catch (err) {
+					setStatus(err.message || 'Registration failed. Please try again.', true);
+				} finally {
+					submitBtn.disabled = false;
+				}
+			});
+		})();
 	</script>
 </body>
+
 </html>

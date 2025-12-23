@@ -20,7 +20,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<IAiProvider, OpenAiChatProvider>();
+
+builder.Services.AddScoped<IAiProvider, PythonAiProvider>();
 builder.Services.AddScoped<ISpeechProvider, OpenAiSpeechProvider>();
 
 // Business Logic Services
@@ -30,8 +31,16 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
-app.UseCors("AllowAll");
+// Ensure DB Schema and Promote Admin
+using (var scope = app.Services.CreateScope())
+{
+    var userService = scope.ServiceProvider.GetRequiredService<IUserService>() as UserService;
+    // Trigger schema creation via constructor or explicit call if needed (it's in ctor)
+    userService?.PromoteUserToAdmin("nevo.iflah6@gmail.com");
+}
+
 app.UseRouting();
+app.UseCors("AllowAll");
 app.MapControllers();
 
 app.Run();

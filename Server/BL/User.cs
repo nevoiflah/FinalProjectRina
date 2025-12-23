@@ -289,6 +289,24 @@ public class UserService : IUserService
                 using var cmd = new SqlCommand(sql, conn);
                 conn.Open();
                 cmd.ExecuteNonQuery();
+
+                // Ensure ChatSessions Table
+                const string chatSql = """
+                    IF OBJECT_ID('dbo.NLA_ChatSessions', 'U') IS NULL
+                    BEGIN
+                        CREATE TABLE dbo.NLA_ChatSessions (
+                            SessionId INT IDENTITY(1,1) PRIMARY KEY,
+                            UserId NVARCHAR(50) NOT NULL,
+                            InitialQuestion NVARCHAR(MAX) NULL,
+                            FinalResult NVARCHAR(MAX) NULL,
+                            StartedAt DATETIME2 DEFAULT GETUTCDATE(),
+                            EndedAt DATETIME2 NULL
+                        );
+                    END
+                    """;
+                using var chatCmd = new SqlCommand(chatSql, conn);
+                chatCmd.ExecuteNonQuery();
+
                 _schemaEnsured = true;
             }
             catch (SqlException ex)
@@ -514,6 +532,15 @@ public class UserService : IUserService
         catch (SqlException ex)
         {
             throw new InvalidOperationException($"Failed to update account status: {ex.Message}", ex);
+        }
+    }
+
+    public void PromoteUserToAdmin(string email)
+    {
+        var user = GetUserByEmail(NormalizeEmail(email));
+        if (user != null && !user.IsAdmin)
+        {
+            ToggleAdmin(user.UserId, true);
         }
     }
 }

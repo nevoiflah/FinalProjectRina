@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,32 +10,18 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
 	<!-- Start Screen -->
-	<div id="startScreen" class="screen">
-		<div class="center-content">
-			<!-- User Menu -->
-			<div class="user-menu">
-				<button id="profileBtn" class="icon-btn user-menu-btn" title="My Profile">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-						<circle cx="12" cy="7" r="4"></circle>
-					</svg>
-				</button>
-				<button id="logoutBtn" class="icon-btn user-menu-btn" title="Logout">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-						<polyline points="16 17 21 12 16 7"></polyline>
-						<line x1="21" y1="12" x2="9" y2="12"></line>
-					</svg>
-				</button>
+	<div id="startScreen" class="screen active">
+		<div class="glass-card">
+			<div class="logo-container">
+				<img src="./logo.svg" alt="Ruppin Logo" class="ruppin-logo">
+				<h1 data-i18n="app_title">Ruppin Academic Advisor</h1>
 			</div>
-
-			<div class="robot-icon">🤖</div>
-			<h1 class="main-title">AI Robot Assistant</h1>
-			<p class="main-subtitle">Your intelligent conversational companion</p>
-			<p class="user-greeting" id="userGreeting">Welcome back!</p>
-			<button id="startChatBtn" class="primary-btn">Start Chat</button>
+			<p class="subtitle" data-i18n="app_subtitle">Discover your future degree with AI guidance</p>
+			<button id="startChatBtn" class="primary-btn pulse" data-i18n="start_consultation">Start
+				Consultation</button>
 		</div>
 	</div>
 
@@ -42,45 +29,84 @@
 	<div id="chatScreen" class="screen hidden">
 		<div class="chat-container">
 			<header class="chat-header">
-				<button id="backBtn" class="back-btn">←</button>
-				<div class="header-center">
-					<div class="bot-avatar">🤖</div>
-					<div>
-						<div class="bot-name">AI Assistant</div>
-						<div class="bot-status">Online</div>
-					</div>
+				<button id="backBtn" class="icon-btn" aria-label="Back">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M19 12H5M12 19l-7-7 7-7" />
+					</svg>
+				</button>
+				<div class="header-info">
+					<h2 data-i18n="chat_header_title">Academic Advisor</h2>
+					<span class="status-dot" data-i18n="chat_status">Online</span>
 				</div>
-				<div class="header-actions">
-					<button id="ttsToggle" class="icon-btn" title="Voice responses OFF" aria-pressed="false">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5">
-							<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-							<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-							<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-						</svg>
-					</button>
-				</div>
+				<button id="langToggle" class="icon-btn font-btn" aria-label="Switch Language"
+					style="font-weight: bold; font-size: 14px; width: 32px;">HE</button>
+				<button id="ttsToggle" class="icon-btn tts-toggle" aria-label="Toggle Conversation Mode"
+					title="Conversation mode OFF">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="speech-icon"
+						stroke="currentColor" stroke-width="2">
+						<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+						<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+						<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+					</svg>
+				</button>
+				<button id="logoutBtn" class="icon-btn" aria-label="Logout" title="Logout">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+						<polyline points="16 17 21 12 16 7"></polyline>
+						<line x1="21" y1="12" x2="9" y2="12"></line>
+					</svg>
+				</button>
 			</header>
 
-			<main class="chat-messages" id="chatMessages">
-				<!-- Messages will be added dynamically -->
-			</main>
+			<div class="chat-messages" id="chatMessages">
+				<!-- Messages will appear here -->
+			</div>
 
-			<footer class="chat-input-area">
+			<!-- Quick Actions Area -->
+			<div id="quickActions" class="quick-actions">
+				<button class="chip-btn" data-action="eligibility">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+						<path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+					</svg>
+					<span data-i18n="check_eligibility">Check Eligibility</span>
+				</button>
+				<button class="chip-btn" data-action="discovery">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<line x1="12" y1="2" x2="12" y2="6"></line>
+						<line x1="12" y1="18" x2="12" y2="22"></line>
+						<line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+						<line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+						<line x1="2" y1="12" x2="6" y2="12"></line>
+						<line x1="18" y1="12" x2="22" y2="12"></line>
+						<line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+						<line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+					</svg>
+					<span data-i18n="help_me_choose">Help Me Choose</span>
+				</button>
+				<button class="chip-btn" data-action="mechina">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+						<polyline points="17 6 23 6 23 12"></polyline>
+					</svg>
+					<span data-i18n="improve_grades">Improve Grades</span>
+				</button>
+			</div>
+
+			<div class="chat-input-area">
 				<div class="input-wrapper">
 					<button id="micBtn" class="mic-btn" title="Record voice message">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-							<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-							<path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+							<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+							<path
+								d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
 						</svg>
 					</button>
-					<input 
-						type="text" 
-						id="messageInput" 
-						class="message-input" 
-						placeholder="Type your message..."
-					/>
+					<input type="text" id="messageInput" class="message-input" placeholder="Type your message..."
+						data-i18n="type_message" />
 					<button id="sendBtn" class="send-btn" title="Send message">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+							stroke-width="2">
 							<line x1="22" y1="2" x2="11" y2="13"></line>
 							<polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
 						</svg>
@@ -90,7 +116,7 @@
 					<div class="recording-dot"></div>
 					<span>Recording... Tap mic to stop and review</span>
 				</div>
-			</footer>
+			</div>
 		</div>
 	</div>
 
@@ -106,7 +132,7 @@
 			try {
 				const user = JSON.parse(raw);
 				window.__CHAT_USER__ = user;
-				
+
 				// Display user greeting
 				const userGreeting = document.getElementById('userGreeting');
 				if (userGreeting && user) {
@@ -127,22 +153,15 @@
 				});
 			}
 
-			// Logout button
-			const logoutBtn = document.getElementById('logoutBtn');
-			if (logoutBtn) {
-				logoutBtn.addEventListener('click', () => {
-					const confirmed = confirm('Are you sure you want to logout?');
-					if (confirmed) {
-						localStorage.removeItem('chatUser');
-						window.location.replace('login.html');
-					}
-				});
-			}
+			// Logout button logic moved to app.js
 		})();
 	</script>
 	<script src="./config.js"></script>
+	<script src="./translations.js"></script>
+	<script src="./language.js"></script>
 	<script src="./api.js"></script>
 	<script src="./script.js"></script>
 	<script src="./app.js"></script>
 </body>
+
 </html>
