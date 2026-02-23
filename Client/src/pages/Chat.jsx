@@ -116,7 +116,7 @@ const Chat = () => {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 if (audioBlob.size > 1000) {
                     try {
-                        const transcript = await getSttTranscript(audioBlob);
+                        const transcript = await getSttTranscript(audioBlob, language);
                         setInputVal(transcript);
                     } catch (error) {
                         console.error(error);

@@ -45,6 +45,13 @@ public class OpenAiSpeechProvider : ISpeechProvider
         // Add model parameter
         content.Add(new StringContent("whisper-1"), "model");
         content.Add(new StringContent(language), "language");
+        content.Add(new StringContent("0"), "temperature");
+
+        // Add prompt parameter to prevent silence hallucinations ("Egg. Egg.") and lock language
+        var promptText = language == "he" 
+            ? "זהו טקסט בעברית על הלימודים במרכז האקדמי רופין. אנא התעלם מרעשי רקע או שקט."
+            : "هذا نص باللغة العربية حول الدراسات في مركز روبين الأكاديمي. يرجى تجاهل الضوضاء في الخلفية أو الصمت.";
+        content.Add(new StringContent(promptText), "prompt");
 
         Console.WriteLine($"[STT] Sending request to OpenAI Whisper API");
         
