@@ -264,3 +264,20 @@ body {
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
 }
+
+/* Dynamic Equalizer */
+.equalizer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 20px;
+}
+
+.eq-bar {
+  width: 3px;
+  background-color: white;
+  border-radius: 2px;
+  min-height: 4px;
+  transition: height 0.05s ease;
+}

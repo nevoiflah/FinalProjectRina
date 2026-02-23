@@ -13,6 +13,14 @@ const Chat = () => {
     const messagesEndRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const sourceRef = useRef(null);
+    const animationFrameRef = useRef(null);
+    const bar1Ref = useRef(null);
+    const bar2Ref = useRef(null);
+    const bar3Ref = useRef(null);
+    const bar4Ref = useRef(null);
     const navigate = useNavigate();
     const { t, language, toggleLanguage } = useLanguage();
 
@@ -71,6 +79,35 @@ const Chat = () => {
             mediaRecorderRef.current = new MediaRecorder(stream);
             audioChunksRef.current = [];
 
+            // Web Audio API setup for dynamic visualizer
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioCtx.createAnalyser();
+            const source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 64;
+
+            audioContextRef.current = audioCtx;
+            analyserRef.current = analyser;
+            sourceRef.current = source;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const updateEqualizer = () => {
+                if (!analyserRef.current) return;
+                analyserRef.current.getByteFrequencyData(dataArray);
+
+                // Map the frequency data into 4 visual bars (max height 24px)
+                if (bar1Ref.current) bar1Ref.current.style.height = `${Math.max(4, (dataArray[2] / 255) * 24)}px`;
+                if (bar2Ref.current) bar2Ref.current.style.height = `${Math.max(4, (dataArray[4] / 255) * 24)}px`;
+                if (bar3Ref.current) bar3Ref.current.style.height = `${Math.max(4, (dataArray[6] / 255) * 24)}px`;
+                if (bar4Ref.current) bar4Ref.current.style.height = `${Math.max(4, (dataArray[8] / 255) * 24)}px`;
+
+                animationFrameRef.current = requestAnimationFrame(updateEqualizer);
+            };
+
+            updateEqualizer();
+
             mediaRecorderRef.current.ondataavailable = e => {
                 if (e.data.size > 0) audioChunksRef.current.push(e.data);
             };
@@ -99,6 +136,14 @@ const Chat = () => {
             mediaRecorderRef.current.stop();
             mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
         }
+
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+        }
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+            audioContextRef.current.close().catch(console.error);
+        }
+
         setRecording(false);
     };
 
@@ -162,7 +207,16 @@ const Chat = () => {
                             onClick={toggleRecording}
                             style={{ background: recording ? '#e53e3e' : 'var(--primary-blue)' }}
                         >
-                            <Mic size={20} />
+                            {recording ? (
+                                <div className="equalizer">
+                                    <div className="eq-bar" ref={bar1Ref}></div>
+                                    <div className="eq-bar" ref={bar2Ref}></div>
+                                    <div className="eq-bar" ref={bar3Ref}></div>
+                                    <div className="eq-bar" ref={bar4Ref}></div>
+                                </div>
+                            ) : (
+                                <Mic size={20} />
+                            )}
                         </button>
                         <input
                             type="text"
