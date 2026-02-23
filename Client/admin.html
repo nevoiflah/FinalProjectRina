@@ -7,6 +7,7 @@
 	<title>Admin Dashboard - Ruppin Advisor</title>
 	<link rel="stylesheet" href="./styles.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="icon" type="image/svg+xml" href="./logo.svg">
 	<style>
 		.admin-container {
 			max-width: 1200px;
@@ -42,6 +43,45 @@
 			background: rgba(255, 255, 255, 0.02);
 		}
 	</style>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		.chart-container {
+			background: rgba(17, 24, 49, 0.6);
+			backdrop-filter: blur(12px);
+			border-radius: 16px;
+			overflow: hidden;
+			/* Match table rounded corners */
+			display: flex;
+			flex-direction: column;
+		}
+
+		.chart-header {
+			background: rgba(255, 255, 255, 0.05);
+			/* Match table header */
+			padding: 16px;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		}
+
+		.chart-body {
+			padding: 20px;
+			flex: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* Fix for tall content (Analytics) getting clipped by flex centering */
+		body.auth-page {
+			display: block;
+			height: auto;
+			min-height: 100vh;
+			overflow-y: auto;
+			padding-top: 40px;
+			padding-bottom: 40px;
+			align-items: unset;
+			justify-content: unset;
+		}
+	</style>
 </head>
 
 <body class="auth-page">
@@ -49,63 +89,309 @@
 		<header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
 			<div>
 				<h1 style="font-size: 24px;">Admin Dashboard</h1>
-				<p style="color: var(--text-light);">User Statistics & Chat History</p>
+				<p style="color: var(--text-light);">System Management</p>
 			</div>
 			<a href="index.html" class="secondary-btn">Back to Chat</a>
 		</header>
 
-		<div id="loading" style="text-align: center; padding: 40px;">Loading stats...</div>
+		<div class="tabs" style="display: flex; gap: 1rem; margin-bottom: 20px;">
+			<button id="tabUsers" class="primary-btn" onclick="switchTab('users')"
+				style="padding: 10px 24px;">Users</button>
+			<button id="tabSessions" class="secondary-btn" onclick="switchTab('sessions')"
+				style="padding: 10px 24px;">Chat History</button>
+			<button id="tabAnalytics" class="secondary-btn" onclick="switchTab('analytics')"
+				style="padding: 10px 24px;">Analytics</button>
+		</div>
 
-		<table class="stats-table hidden" id="statsTable">
-			<thead>
-				<tr>
-					<th>User</th>
-					<th>Email</th>
-					<th>Joined</th>
-					<th>Initial Question</th>
-					<th>Final Result</th>
-				</tr>
-			</thead>
-			<tbody id="statsBody"></tbody>
-		</table>
+		<div id="loading" style="text-align: center; padding: 40px;" class="hidden">Loading...</div>
+
+		<!-- Users Table -->
+		<div id="usersSection">
+			<table class="stats-table" id="usersTable">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Email</th>
+						<th>Role</th>
+						<th>Joined</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody id="usersBody"></tbody>
+			</table>
+		</div>
+
+		<!-- Sessions Table -->
+		<div id="sessionsSection" class="hidden">
+			<table class="stats-table" id="sessionsTable">
+				<thead>
+					<tr>
+						<th>Date</th>
+						<th>User</th>
+						<th>Question</th>
+						<th>Result</th>
+					</tr>
+				</thead>
+				<tbody id="sessionsBody"></tbody>
+			</table>
+		</div>
+
+		<!-- Analytics Section -->
+		<div id="analyticsSection" class="hidden">
+			<div class="stats-table" style="display: block; padding: 0;">
+				<div class="chart-header">
+					<h3 style="font-size: 1.1rem;">System Analytics</h3>
+				</div>
+				<!-- Vertical Stack Layout -->
+				<div
+					style="padding: 30px; display: grid; grid-template-columns: 1fr; gap: 40px; max-width: 800px; margin: 0 auto;">
+					<!-- Degree Interest -->
+					<div style="text-align: center;">
+						<h4 style="color: var(--text-light); margin-bottom: 15px;">Degree Interest</h4>
+						<div style="height: 350px; display: flex; justify-content: center;">
+							<canvas id="degreeChart"></canvas>
+						</div>
+					</div>
+
+					<hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+
+					<!-- Daily Traffic -->
+					<div style="text-align: center;">
+						<h4 style="color: var(--text-light); margin-bottom: 15px;">Daily Consultations</h4>
+						<div style="height: 300px;">
+							<canvas id="trafficChart"></canvas>
+						</div>
+					</div>
+
+					<hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+
+					<!-- Session Duration -->
+					<div style="text-align: center;">
+						<h4 style="color: var(--text-light); margin-bottom: 15px;">Session Duration</h4>
+						<div style="height: 300px;">
+							<canvas id="durationChart"></canvas>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<script>
+		let currentUser = null;
+		const API_BASE = 'http://localhost:5000/api/admin';
+		let charts = {}; // Store chart instances
+		let analyticsLoaded = false;
+
 		(async function () {
 			const raw = localStorage.getItem('chatUser');
 			if (!raw) return window.location.href = 'login.html';
 
-			const user = JSON.parse(raw);
-			// Simple client-side check, real check is on server
-			if (user.email !== 'nevo.iflah6@gmail.com' && !user.isAdmin) {
+			currentUser = JSON.parse(raw);
+			if (!currentUser.isAdmin && !currentUser.IsAdmin) { // Check both casing
 				alert('Access Denied. Admins only.');
 				window.location.href = 'index.html';
 				return;
 			}
 
+			// Initial load
+			loadUsers();
+		})();
+
+		function switchTab(tab) {
+			const tabs = ['tabUsers', 'tabSessions', 'tabAnalytics'];
+			const sections = ['usersSection', 'sessionsSection', 'analyticsSection'];
+
+			// Updates Buttons
+			tabs.forEach(t => {
+				document.getElementById(t).className = (t === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1))
+					? 'primary-btn' : 'secondary-btn';
+			});
+
+			// Update Sections
+			sections.forEach(s => {
+				document.getElementById(s).classList.toggle('hidden', s !== tab + 'Section');
+			});
+
+			if (tab === 'users') loadUsers();
+			if (tab === 'sessions') loadSessions();
+
+			// Only load analytics if not already loaded (Prevents re-animation glitch)
+			if (tab === 'analytics' && !analyticsLoaded) {
+				loadAnalytics();
+			}
+		}
+
+		async function loadAnalytics() {
+			showLoading(true);
 			try {
-				const res = await fetch(`http://localhost:5000/api/admin/stats?userId=${user.userId}`);
+				const res = await fetch(`${API_BASE}/stats?userId=${currentUser.userId}`);
 				if (!res.ok) throw new Error('Failed to load stats');
-
-				const stats = await res.json();
-				const tbody = document.getElementById('statsBody');
-				document.getElementById('loading').classList.add('hidden');
-				document.getElementById('statsTable').classList.remove('hidden');
-
-				tbody.innerHTML = stats.map(s => `
-                    <tr>
-                        <td style="color: white; font-weight: 500;">${s.name}</td>
-                        <td>${s.email}</td>
-                        <td>${new Date(s.joinedAt).toLocaleDateString()}</td>
-                        <td title="${s.firstQuestion}">${s.firstQuestion.substring(0, 50)}${s.firstQuestion.length > 50 ? '...' : ''}</td>
-                        <td title="${s.lastResult}">${s.lastResult.substring(0, 50)}${s.lastResult.length > 50 ? '...' : ''}</td>
-                    </tr>
-                `).join('');
+				const data = await res.json();
+				renderCharts(data);
+				analyticsLoaded = true; // Mark as loaded
 			} catch (err) {
 				console.error(err);
-				document.getElementById('loading').textContent = 'Error loading stats. Ensure you are an admin.';
+				alert('Error loading analytics');
+			} finally {
+				showLoading(false);
 			}
-		})();
+		}
+
+		function renderCharts(data) {
+			const commonOptions = {
+				responsive: true,
+				plugins: {
+					legend: { labels: { color: 'white' } }
+				},
+				scales: {
+					y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+					x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+				}
+			};
+
+			// 1. Degree Interest (Pie)
+			if (charts.degree) charts.degree.destroy();
+			charts.degree = new Chart(document.getElementById('degreeChart'), {
+				type: 'doughnut',
+				data: {
+					labels: Object.keys(data.degreeStats),
+					datasets: [{
+						data: Object.values(data.degreeStats),
+						backgroundColor: [
+							'#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'
+						],
+						borderWidth: 0
+					}]
+				},
+				options: {
+					responsive: true,
+					plugins: { legend: { labels: { color: 'white' } } }
+				}
+			});
+
+			// 2. Daily Traffic (Line)
+			if (charts.traffic) charts.traffic.destroy();
+			charts.traffic = new Chart(document.getElementById('trafficChart'), {
+				type: 'line',
+				data: {
+					labels: data.dailyTraffic.map(x => x.date),
+					datasets: [{
+						label: 'Sessions',
+						data: data.dailyTraffic.map(x => x.count),
+						borderColor: '#10b981',
+						backgroundColor: 'rgba(16, 185, 129, 0.2)',
+						fill: true,
+						tension: 0.4
+					}]
+				},
+				options: commonOptions
+			});
+
+			// 3. Duration (Bar)
+			if (charts.duration) charts.duration.destroy();
+			charts.duration = new Chart(document.getElementById('durationChart'), {
+				type: 'bar',
+				data: {
+					labels: ['Short (<2m)', 'Medium (2-10m)', 'Long (>10m)'],
+					datasets: [{
+						label: 'Sessions',
+						data: [data.durationStats.short, data.durationStats.medium, data.durationStats.long],
+						backgroundColor: ['#f59e0b', '#3b82f6', '#ec4899']
+					}]
+				},
+				options: commonOptions
+			});
+		}
+
+		async function loadUsers() {
+			showLoading(true);
+			try {
+				const res = await fetch(`${API_BASE}/users?userId=${currentUser.userId}`);
+				if (!res.ok) throw new Error('Failed to load users');
+				const users = await res.json();
+
+				const tbody = document.getElementById('usersBody');
+				tbody.innerHTML = users.map(u => `
+					<tr>
+						<td style="color: white; font-weight: 500;">${u.name || u.Name}</td>
+						<td>${u.email || u.Email}</td>
+						<td>
+							<span style="padding: 4px 8px; border-radius: 4px; background: ${(u.isAdmin || u.IsAdmin) ? '#48bb78' : 'rgba(255,255,255,0.1)'}; font-size: 12px;">
+								${(u.isAdmin || u.IsAdmin) ? 'Admin' : 'User'}
+							</span>
+						</td>
+						<td>${new Date(u.joinedAt || u.JoinedAt).toLocaleDateString()}</td>
+						<td>
+							<div style="display: flex; gap: 8px;">
+								${(u.isAdmin || u.IsAdmin)
+						? `<button onclick="toggleRole('${u.userId || u.UserId}', 'demote')" class="secondary-btn" style="padding: 4px 12px; font-size: 12px; border-color: #ecc94b; color: #ecc94b;">Revoke</button>`
+						: `<button onclick="toggleRole('${u.userId || u.UserId}', 'promote')" class="secondary-btn" style="padding: 4px 12px; font-size: 12px; border-color: #48bb78; color: #48bb78;">Make Admin</button>`
+					}
+								<button onclick="deleteUser('${u.userId || u.UserId}')" class="secondary-btn" style="padding: 4px 12px; font-size: 12px; border-color: #f56565; color: #f56565;">Delete</button>
+							</div>
+						</td>
+					</tr>
+				`).join('');
+			} catch (err) {
+				console.error(err);
+				alert('Error loading users');
+			} finally {
+				showLoading(false);
+			}
+		}
+
+		async function loadSessions() {
+			showLoading(true);
+			try {
+				const res = await fetch(`${API_BASE}/sessions?userId=${currentUser.userId}`);
+				if (!res.ok) throw new Error('Failed to load sessions');
+				const sessions = await res.json();
+
+				const tbody = document.getElementById('sessionsBody');
+				tbody.innerHTML = sessions.map(s => `
+					<tr>
+						<td>${new Date(s.date || s.Date).toLocaleString()}</td>
+						<td style="color: white; font-weight: 500;">${s.userName || s.UserName}</td>
+						<td title="${s.question || s.Question}">${(s.question || s.Question).substring(0, 40)}...</td>
+						<td title="${s.result || s.Result}">${(s.result || s.Result).substring(0, 40)}...</td>
+					</tr>
+				`).join('');
+			} catch (err) {
+				console.error(err);
+				alert('Error loading sessions');
+			} finally {
+				showLoading(false);
+			}
+		}
+
+		async function toggleRole(targetUserId, action) {
+			if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+			try {
+				const res = await fetch(`${API_BASE}/users/${targetUserId}/${action}?adminId=${currentUser.userId}`, { method: 'POST' });
+				if (!res.ok) throw new Error('Action failed');
+				loadUsers(); // Refresh
+			} catch (err) {
+				alert('Failed to update role');
+			}
+		}
+
+		async function deleteUser(targetUserId) {
+			if (!confirm('WARNING: This will delete the user AND all their chat history. This action cannot be undone. Are you sure?')) return;
+
+			try {
+				const res = await fetch(`${API_BASE}/users/${targetUserId}?adminId=${currentUser.userId}`, { method: 'DELETE' });
+				if (!res.ok) throw new Error('Delete failed');
+				loadUsers(); // Refresh
+			} catch (err) {
+				alert('Failed to delete user');
+			}
+		}
+
+		function showLoading(show) {
+			document.getElementById('loading').classList.toggle('hidden', !show);
+		}
 	</script>
 </body>
 

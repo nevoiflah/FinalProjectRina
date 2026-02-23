@@ -40,6 +40,17 @@ public class ChatController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+    [HttpPost("end")]
+    public async Task<IActionResult> EndSession([FromBody] ChatRequest? request)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.UserId))
+        {
+            return BadRequest(new { error = "UserId is required" });
+        }
+        
+        await _chatService.EndSessionAsync(request.UserId);
+        return Ok(new { message = "Session ended" });
+    }
 }
 
 public record ChatRequest(string? Message, string? UserId);

@@ -2028,3 +2028,155 @@ h1 {
 		text-align: center;
 	}
 }
+/* Voice Overlay Styles */
+.voice-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.4s ease-out;
+    border-radius: 24px; /* Match chat container radius */
+    overflow: hidden;
+}
+
+.voice-overlay.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.voice-header {
+    padding: 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-voice {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.voice-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.voice-status {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    font-weight: 500;
+    min-height: 1.5em;
+}
+
+.voice-visualizer {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.breathing-sphere {
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Specific States for the Sphere */
+/* Speaking: Pulse vigorously */
+.voice-overlay.speaking .breathing-sphere {
+    animation: pulse-speak 1s infinite alternate;
+    background: #667eea;
+    box-shadow: 0 0 50px rgba(102, 126, 234, 0.6);
+}
+
+/* Listening: Gentle ripple */
+.voice-overlay.listening .breathing-sphere {
+    transform: scale(1);
+    background: #fff;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+.voice-overlay.listening .ripple-ring {
+    animation: ripple 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
+}
+
+/* Thinking: Slow breathe */
+.voice-overlay.thinking .breathing-sphere {
+    animation: breathe-think 3s infinite ease-in-out;
+    background: #a0aec0;
+}
+
+.ripple-ring {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    opacity: 0;
+}
+
+.ripple-ring.delay-1 {
+    animation-delay: 0.5s;
+}
+
+@keyframes pulse-speak {
+    from { transform: scale(0.95); opacity: 0.8; }
+    to { transform: scale(1.15); opacity: 1; }
+}
+
+@keyframes breathe-think {
+    0%, 100% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+@keyframes ripple {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(3); opacity: 0; }
+}
+
+.voice-controls {
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.voice-mic-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.voice-mic-btn.active {
+    background: white;
+    color: #1f2937;
+}
+
+.voice-mic-btn:hover {
+    transform: scale(1.1);
+}

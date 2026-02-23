@@ -5,6 +5,7 @@ namespace FinalProjectRina.Server.BL;
 public interface IChatService
 {
     Task<string> GenerateReplyAsync(string? message, string? userId);
+    Task EndSessionAsync(string userId);
 }
 
 public class ChatService : IChatService
@@ -29,14 +30,7 @@ public class ChatService : IChatService
         // 2. Generate Reply
         var reply = await _aiProvider.GenerateChatReplyAsync(message.Trim(), context);
 
-        // 2. Persist Session (Upsert logic: Create if new context, or just log simplified "First Question -> Final Result" logic)
-        // Per user request: "what question initialized their chat and on what response they ended it"
-        // We will treat every message as potentially updating the "Final Result" of the LATEST open session, 
-        // OR create a new session if none exists recently. For simplicity, we'll store every interaction as an update to the user's "Current" session or create one.
-        // Let's implement a simple logic: Check for usage in last 10 minutes?
-        // Actually, user just wants "what question initialized their chat". 
-        // We will try to find an open session (EndedAt IS NULL). If found, update FinalResult. If not, create new.
-        
+        // 3. Log Interaction
         await LogChatInteraction(userId, message, reply);
 
         return reply;
@@ -104,18 +98,16 @@ public class ChatService : IChatService
     private async Task LogChatInteraction(string userId, string userMessage, string botReply)
     {
         const string connName = "myProjDB"; 
-        // Note: For production, inject ConnectionString proper, reusing logic from UserService or a DbContext is better.
-        // Duplicating connection string logic for speed as requested.
         var connStr = _configuration.GetConnectionString(connName);
         if (!connStr.Contains("TrustServerCertificate", StringComparison.OrdinalIgnoreCase)) connStr += ";TrustServerCertificate=True;Encrypt=True";
 
         using var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr);
         await conn.OpenAsync();
 
-        // Check for active session (e.g. created in last 30 mins)
+        // Check for active session NOT ended
         const string checkSql = @"
             SELECT TOP 1 SessionId FROM NLA_ChatSessions 
-            WHERE UserId = @UserId AND EndedAt IS NULL AND StartedAt > DATEADD(minute, -30, GETUTCDATE())
+            WHERE UserId = @UserId AND EndedAt IS NULL
             ORDER BY StartedAt DESC";
         
         using var checkCmd = new Microsoft.Data.SqlClient.SqlCommand(checkSql, conn);
@@ -124,10 +116,10 @@ public class ChatService : IChatService
 
         if (sessionId != null)
         {
-            // Update existing
+            // Update existing active session
             const string updateSql = @"
                 UPDATE NLA_ChatSessions 
-                SET FinalResult = @Reply, EndedAt = NULL -- Keep it open, or update timestamp
+                SET FinalResult = @Reply
                 WHERE SessionId = @SessionId";
             using var updateCmd = new Microsoft.Data.SqlClient.SqlCommand(updateSql, conn);
             updateCmd.Parameters.AddWithValue("@Reply", botReply);
@@ -146,5 +138,21 @@ public class ChatService : IChatService
             insertCmd.Parameters.AddWithValue("@Reply", botReply);
             await insertCmd.ExecuteNonQueryAsync();
         }
+    }
+
+    public async Task EndSessionAsync(string userId)
+    {
+        const string connName = "myProjDB"; 
+        var connStr = _configuration.GetConnectionString(connName);
+        if (!connStr.Contains("TrustServerCertificate", StringComparison.OrdinalIgnoreCase)) connStr += ";TrustServerCertificate=True;Encrypt=True";
+
+        using var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr);
+        await conn.OpenAsync();
+
+        // Mark all open sessions for this user as ended
+        const string sql = "UPDATE NLA_ChatSessions SET EndedAt = GETUTCDATE() WHERE UserId = @UserId AND EndedAt IS NULL";
+        using var cmd = new Microsoft.Data.SqlClient.SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        await cmd.ExecuteNonQueryAsync();
     }
 }

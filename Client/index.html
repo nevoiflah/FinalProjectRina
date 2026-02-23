@@ -9,6 +9,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="icon" type="image/svg+xml" href="./logo.svg">
 </head>
 
 <body>
@@ -22,6 +23,9 @@
 			<p class="subtitle" data-i18n="app_subtitle">Discover your future degree with AI guidance</p>
 			<button id="startChatBtn" class="primary-btn pulse" data-i18n="start_consultation">Start
 				Consultation</button>
+			<button id="adminPanelBtn" class="primary-btn hidden"
+				style="margin-top: 1rem; background: rgba(255, 255, 255, 0.9); color: #4a5568;"
+				data-i18n="admin_panel">Admin Panel</button>
 		</div>
 	</div>
 
@@ -41,12 +45,12 @@
 				<button id="langToggle" class="icon-btn font-btn" aria-label="Switch Language"
 					style="font-weight: bold; font-size: 14px; width: 32px;">HE</button>
 				<button id="ttsToggle" class="icon-btn tts-toggle" aria-label="Toggle Conversation Mode"
-					title="Conversation mode OFF">
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="speech-icon"
-						stroke="currentColor" stroke-width="2">
-						<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-						<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-						<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+					title="Start Voice Conversation">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+						<path
+							d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z">
+						</path>
 					</svg>
 				</button>
 				<button id="logoutBtn" class="icon-btn" aria-label="Logout" title="Logout">
@@ -60,6 +64,38 @@
 
 			<div class="chat-messages" id="chatMessages">
 				<!-- Messages will appear here -->
+			</div>
+
+			<!-- Voice Conversation Overlay -->
+			<div id="voiceOverlay" class="voice-overlay hidden">
+				<div class="voice-header">
+					<button id="voiceCloseBtn" class="icon-btn close-voice">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+							stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+				</div>
+				<div class="voice-content">
+					<div id="voiceStatus" class="voice-status">Listening...</div>
+					<div class="voice-visualizer">
+						<div class="breathing-sphere"></div>
+						<div class="ripple-ring"></div>
+						<div class="ripple-ring delay-1"></div>
+					</div>
+				</div>
+				<div class="voice-controls">
+					<button id="voiceMicBtn" class="voice-mic-btn active">
+						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+							stroke-width="2">
+							<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+							<path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+							<line x1="12" y1="19" x2="12" y2="23"></line>
+							<line x1="8" y1="23" x2="16" y2="23"></line>
+						</svg>
+					</button>
+				</div>
 			</div>
 
 			<!-- Quick Actions Area -->

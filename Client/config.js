@@ -3,10 +3,11 @@
 	const params = new URLSearchParams(window.location.search);
 	const queryBase = params.get('apiBase');
 
-	let base = window.__CHAT_API_BASE__ || localStorage.getItem(STORAGE_KEY) || '';
+	// Hardcoded for stability - avoid sticky localStorage issues
+	let base = window.__CHAT_API_BASE__ || 'http://localhost:5000';
+
 	if (queryBase) {
 		base = queryBase;
-		localStorage.setItem(STORAGE_KEY, base);
 	}
 
 	function setBase(url) {

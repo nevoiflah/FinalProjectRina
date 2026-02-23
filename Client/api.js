@@ -88,13 +88,13 @@
 	async function chat(message) {
 		if (!message) throw new Error('Message text is required');
 		const { userId } = ensureAuthenticatedUser();
-		
+
 		if (USE_MOCK_API) {
 			await delay(700);
 			const reply = mockReplies[Math.floor(Math.random() * mockReplies.length)];
 			return { reply };
 		}
-		
+
 		const apiBase = getApiBase();
 		const res = await fetch(`${apiBase}/api/chat`, {
 			method: 'POST',
@@ -109,47 +109,47 @@
 		if (!(audioBlob instanceof Blob)) {
 			throw new Error('Audio blob is required for STT');
 		}
-		
+
 		if (USE_MOCK_API) {
 			await delay(600);
 			const ts = new Date().toLocaleTimeString();
 			return { transcript: `Mock transcript captured at ${ts}` };
 		}
-		
+
 		try {
 			const form = new FormData();
 			form.append('audio', audioBlob, 'speech.webm');
 			const apiBase = getApiBase();
-			
+
 			console.log('Sending audio to STT:', {
 				size: audioBlob.size,
 				type: audioBlob.type,
 				url: `${apiBase}/api/stt`
 			});
-			
+
 			const res = await fetch(`${apiBase}/api/stt`, {
 				method: 'POST',
 				body: form,
 			});
-			
+
 			console.log('STT response status:', res.status);
-			
+
 			if (!res.ok) {
 				const errorText = await res.text();
 				console.error('STT error response:', errorText);
 				throw new Error(`STT failed with status ${res.status}: ${errorText}`);
 			}
-			
+
 			const data = await res.json();
 			console.log('STT response data:', JSON.stringify(data));
 			console.log('Transcript value:', data.transcript);
 			console.log('Transcript type:', typeof data.transcript);
-			
+
 			if (!data.transcript || data.transcript.trim() === '') {
 				console.warn('Empty transcript received from API');
 				throw new Error('No transcript returned from speech recognition service');
 			}
-			
+
 			return { transcript: data.transcript };
 		} catch (error) {
 			console.error('STT request failed:', error);
@@ -159,12 +159,12 @@
 
 	async function tts(text) {
 		if (!text) throw new Error('Text is required for TTS');
-		
+
 		if (USE_MOCK_API) {
 			await delay(500);
 			return createToneWavBlob(750, 620);
 		}
-		
+
 		const apiBase = getApiBase();
 		const res = await fetch(`${apiBase}/api/tts`, {
 			method: 'POST',
@@ -175,10 +175,30 @@
 		return new Blob([arrayBuf], { type: res.headers.get('Content-Type') || 'audio/wav' });
 	}
 
+	async function endSession() {
+		if (USE_MOCK_API) {
+			console.log('Mock session ended');
+			return;
+		}
+
+		try {
+			const { userId } = ensureAuthenticatedUser();
+			const apiBase = getApiBase();
+			await fetch(`${apiBase}/api/chat/end`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId }),
+			});
+		} catch (err) {
+			console.warn('Failed to end session:', err);
+		}
+	}
+
 	window.BotAPI = Object.freeze({
 		mode: USE_MOCK_API ? 'mock' : 'real',
 		chat,
 		stt,
 		tts,
+		endSession,
 	});
 })();

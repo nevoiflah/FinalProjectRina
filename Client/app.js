@@ -41,6 +41,7 @@
 		cacheElements() {
 			const refs = {
 				startScreen: document.getElementById('startScreen'),
+				adminPanelBtn: document.getElementById('adminPanelBtn'),
 				chatScreen: document.getElementById('chatScreen'),
 				startChatBtn: document.getElementById('startChatBtn'),
 				backBtn: document.getElementById('backBtn'),
@@ -77,7 +78,15 @@
 		}
 
 		bindEvents() {
-			const { startChatBtn, backBtn, sendBtn, micBtn, messageInput, ttsToggle } = this.refs;
+			const { startChatBtn, backBtn, sendBtn, micBtn, messageInput, ttsToggle, adminPanelBtn } = this.refs;
+
+			// Admin Button Logic
+			if (adminPanelBtn && this.currentUser && (this.currentUser.isAdmin || this.currentUser.IsAdmin)) {
+				adminPanelBtn.classList.remove('hidden');
+				adminPanelBtn.addEventListener('click', () => {
+					window.location.href = 'admin.html';
+				});
+			}
 
 			startChatBtn.addEventListener('click', () => this.startChat());
 			backBtn.addEventListener('click', () => this.backToStart());
@@ -110,6 +119,9 @@
 			if (logoutBtn) {
 				logoutBtn.addEventListener('click', () => {
 					if (confirm(window.langManager ? window.langManager.getText('logout_confirm') : 'Are you sure you want to logout?')) {
+						if (window.BotAPI?.endSession) {
+							window.BotAPI.endSession();
+						}
 						localStorage.removeItem('chatUser');
 						if (window.LanguageManager) window.LanguageManager.resetToDefault();
 						window.location.replace('login.html');
@@ -189,52 +201,36 @@
 		toggleTts() {
 			this.ttsEnabled = !this.ttsEnabled;
 			const { ttsToggle, chatScreen } = this.refs;
-			const inputArea = document.querySelector('.chat-input-area');
 
-			if (ttsToggle) {
-				ttsToggle.classList.toggle('active', this.ttsEnabled);
-				ttsToggle.setAttribute('aria-pressed', String(this.ttsEnabled));
-				ttsToggle.title = this.ttsEnabled ? 'Exit conversation mode' : 'Conversation mode OFF';
+			// New overlay reference
+			const voiceOverlay = document.getElementById('voiceOverlay');
+			const voiceCloseBtn = document.getElementById('voiceCloseBtn');
+			const voiceMicBtn = document.getElementById('voiceMicBtn');
 
-				const icon = ttsToggle.querySelector('svg');
-				if (icon) {
-					if (this.ttsEnabled) {
-						// Change to back arrow
-						icon.innerHTML = '<line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>';
-						icon.style.opacity = '1';
-					} else {
-						// Change back to speaker icon
-						icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>';
-						icon.style.opacity = '0.5';
-					}
-				}
-			}
-
-			// Hide/show input wrapper
-			if (inputArea) {
-				if (this.ttsEnabled) {
-					inputArea.classList.add('hidden-for-conversation');
-				} else {
-					inputArea.classList.remove('hidden-for-conversation');
-				}
-			}
-
+			// Simple toggle logic
 			if (this.ttsEnabled) {
-				chatScreen?.classList.add('conversation-mode');
+				// Activate Voice Mode
+				if (voiceOverlay) voiceOverlay.classList.remove('hidden');
 				this.startConversationMode();
+
+				// Bind close button dynamically if needed
+				if (voiceCloseBtn) voiceCloseBtn.onclick = () => this.toggleTts(); // Toggle off
+				if (voiceMicBtn) voiceMicBtn.onclick = () => {
+					// Manual intervention could go here, for now just a visual indicator
+				};
+
+				// Update main Toggle Icon state
+				ttsToggle.classList.add('active');
 			} else {
-				chatScreen?.classList.remove('conversation-mode');
+				// Deactivate Voice Mode
+				if (voiceOverlay) voiceOverlay.classList.add('hidden');
 				this.stopConversationMode();
+				ttsToggle.classList.remove('active');
 			}
 		}
 
 		startConversationMode() {
-			console.log('[Conversation] Starting human-like conversation mode');
-
-			// Show notification
-			this.showConversationModeNotification();
-
-			// Initialize state
+			console.log('[Conversation] Starting immersive mode');
 			this.conversationState = {
 				isActive: true,
 				isListening: false,
@@ -243,44 +239,49 @@
 				analyser: null,
 				silenceTimer: null,
 				waitTimer: null,
-				silenceThreshold: 1500,
-				waitAfterResponse: 2500,
+				silenceThreshold: 1000,
+				waitAfterResponse: 600,
 			};
 
-			// Create visual indicator
-			this.createConversationIndicator();
+			// Start listening
+			this.updateVoiceOverlayState('listening', 'Listening...');
+			setTimeout(() => this.beginListening(), 500);
+		}
 
-			// Start listening after brief delay
-			setTimeout(() => this.beginListening(), 1000);
+		updateVoiceOverlayState(state, statusText) {
+			const overlay = document.getElementById('voiceOverlay');
+			const statusEl = document.getElementById('voiceStatus');
+
+			if (!overlay) return;
+
+			// Remove all states first
+			overlay.classList.remove('listening', 'thinking', 'speaking');
+
+			if (state) overlay.classList.add(state);
+			if (statusEl && statusText) statusEl.textContent = statusText;
+		}
+
+		// Update existing methods to hook into new UI
+		updateConversationStatus(status, state) {
+			// Proxy to new method
+			this.updateVoiceOverlayState(state, status);
 		}
 
 		stopConversationMode() {
-			console.log('[Conversation] Stopping conversation mode');
-
+			console.log('[Conversation] Stopping immersive mode');
 			if (this.conversationState) {
 				this.conversationState.isActive = false;
-
-				if (this.conversationState.silenceTimer) {
-					clearTimeout(this.conversationState.silenceTimer);
-				}
-				if (this.conversationState.waitTimer) {
-					clearTimeout(this.conversationState.waitTimer);
-				}
-				if (this.conversationState.audioContext) {
-					this.conversationState.audioContext.close();
-				}
+				if (this.conversationState.silenceTimer) clearTimeout(this.conversationState.silenceTimer);
+				if (this.conversationState.waitTimer) clearTimeout(this.conversationState.waitTimer);
+				if (this.conversationState.audioContext) this.conversationState.audioContext.close();
 			}
 
 			if (this.voiceController?.isRecording) {
 				this.voiceController.stop();
 			}
 
-			// Restore the original onTranscription handler
-			if (this.voiceController && this.originalOnTranscription) {
-				this.voiceController.onTranscription = this.originalOnTranscription;
-			}
-
-			this.removeConversationIndicator();
+			// Reset Overlay
+			this.updateVoiceOverlayState('', '');
 		}
 
 		showConversationModeNotification() {
@@ -511,6 +512,7 @@
 				const audioBlob = await window.BotAPI.tts(text);
 				const url = URL.createObjectURL(audioBlob);
 				this.refs.ttsAudio.src = url;
+				this.refs.ttsAudio.playbackRate = 1.2; // Speak faster
 
 				await new Promise((resolve) => {
 					this.refs.ttsAudio.onended = () => {
@@ -589,6 +591,11 @@
 			if (this.ttsEnabled) {
 				this.ttsEnabled = false;
 				this.stopConversationMode();
+			}
+
+			// End Session on Server
+			if (window.BotAPI?.endSession) {
+				window.BotAPI.endSession();
 			}
 
 			chatScreen.classList.add('fade-out');
