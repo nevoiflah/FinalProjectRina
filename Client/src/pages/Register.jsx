@@ -44,7 +44,7 @@ const Register = () => {
             </button>
             <div className="auth-card">
                 <div className="auth-header">
-                    <img src="/logo.svg" alt="Ruppin Logo" />
+                    <img src="/logo.png" alt="Ruppin Logo" />
                     <h1>{t('registerTitle')}</h1>
                     <p>{t('createAccount')}</p>
                 </div>

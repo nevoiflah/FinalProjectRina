@@ -43,7 +43,7 @@ const Login = () => {
 
             <div className="auth-card">
                 <div className="auth-header">
-                    <img src="/logo.svg" alt="Ruppin Logo" />
+                    <img src="/logo.png" alt="Ruppin Logo" />
                     <h1>{t('appTitle')}</h1>
                     <p>{t('appSubtitle')}</p>
                 </div>
