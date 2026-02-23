@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Globe } from 'lucide-react';
 import { registerUser } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -38,9 +39,10 @@ const Register = () => {
         <div className="app-container" dir={language === 'he' || language === 'ar' ? 'rtl' : 'ltr'}>
             <button
                 onClick={toggleLanguage}
-                style={{ position: 'absolute', top: 20, left: 20, background: 'var(--primary-blue)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 8, cursor: 'pointer' }}
+                className="language-toggle-btn"
             >
-                {language === 'he' ? 'עברית' : 'العربية'}
+                <Globe size={16} />
+                <span>{language === 'he' ? 'עברית' : 'العربية'}</span>
             </button>
             <div className="auth-card">
                 <div className="auth-header">

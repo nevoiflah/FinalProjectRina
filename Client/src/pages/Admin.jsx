@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ArrowRight } from 'lucide-react';
+import { LogOut, ArrowRight, Globe } from 'lucide-react';
 import { fetchAdminStats } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -32,9 +32,10 @@ const Admin = () => {
         <div className="app-container" dir={language === 'he' || language === 'ar' ? 'rtl' : 'ltr'}>
             <button
                 onClick={toggleLanguage}
-                style={{ position: 'absolute', top: 20, left: 20, background: 'var(--primary-blue)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 8, cursor: 'pointer' }}
+                className="language-toggle-btn"
             >
-                {language === 'he' ? 'עברית' : 'العربية'}
+                <Globe size={16} />
+                <span>{language === 'he' ? 'עברית' : 'العربية'}</span>
             </button>
             <div className="chat-container" style={{ maxWidth: '1200px' }}>
                 <header className="chat-header">

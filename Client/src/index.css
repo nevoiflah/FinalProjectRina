@@ -237,3 +237,30 @@ body {
   font-size: 13px;
   margin-top: 8px;
 }
+
+/* Language Toggle Button */
+.language-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--primary-blue);
+  color: var(--text-white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.language-toggle-btn:hover {
+  background: var(--primary-green);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}

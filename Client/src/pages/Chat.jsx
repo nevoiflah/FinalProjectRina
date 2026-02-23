@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Send, LogOut, LayoutDashboard } from 'lucide-react';
+import { Mic, Send, LogOut, LayoutDashboard, Globe } from 'lucide-react';
 import { sendChatMessage, getSttTranscript, getTtsAudio, endSession } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -117,9 +117,9 @@ const Chat = () => {
             <button
                 onClick={toggleLanguage}
                 className="language-toggle-btn"
-                style={{ position: 'absolute', top: 20, left: 20, background: 'var(--primary-blue)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', zIndex: 100 }}
             >
-                {language === 'he' ? 'עברית' : 'العربية'}
+                <Globe size={16} />
+                <span>{language === 'he' ? 'עברית' : 'العربية'}</span>
             </button>
             <div className="chat-container">
                 <header className="chat-header">
