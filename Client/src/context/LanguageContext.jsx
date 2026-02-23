@@ -11,7 +11,7 @@ export const translations = {
         passwordPlaceholder: 'סיסמה',
         signIn: 'התחבר',
         registerPrompt: 'אין לך חשבון? צור אחד עכשיו',
-        registerTitle: 'הרשמה למערכת רופין',
+        registerTitle: 'הרשמה לייעוץ',
         namePlaceholder: 'שם מלא',
         createAccount: 'צור חשבון',
         loginPrompt: 'יש לך כבר חשבון? התחבר',
