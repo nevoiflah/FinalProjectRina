@@ -47,13 +47,8 @@ public class ChatService : IChatService
 
             if (!keywords.Any()) return new List<string>();
 
-            const string sql = @"
-                SELECT TOP 100 InitialQuestion, FinalResult 
-                FROM NLA_ChatSessions 
-                WHERE FinalResult IS NOT NULL 
-                ORDER BY StartedAt DESC";
-
             var candidates = new List<(string Question, string Answer)>();
+            var facts = new List<(string Category, string Fact)>();
 
             var connStr = _configuration.GetConnectionString("myProjDB");
             if (!connStr.Contains("TrustServerCertificate", StringComparison.OrdinalIgnoreCase)) 
@@ -62,19 +57,41 @@ public class ChatService : IChatService
             using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr))
             {
                 await conn.OpenAsync();
-                using var cmd = new Microsoft.Data.SqlClient.SqlCommand(sql, conn);
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+
+                // 1. Get History Context
+                const string sqlHistory = @"
+                    SELECT TOP 100 InitialQuestion, FinalResult 
+                    FROM NLA_ChatSessions 
+                    WHERE FinalResult IS NOT NULL 
+                    ORDER BY StartedAt DESC";
+                using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(sqlHistory, conn))
+                using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    candidates.Add((
-                        reader.GetString(0),
-                        reader.GetString(1)
-                    ));
+                    while (await reader.ReadAsync())
+                    {
+                        candidates.Add((reader.GetString(0), reader.GetString(1)));
+                    }
                 }
+
+                // 2. Get Factual Knowledge Context
+                // Wrapped in try/catch mapping so the app doesn't crash if the user hasn't created the table yet
+                try 
+                {
+                    const string sqlFacts = @"SELECT Category, FactText FROM NLA_RuppinKnowledge";
+                    using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(sqlFacts, conn))
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            facts.Add((reader.GetString(0), reader.GetString(1)));
+                        }
+                    }
+                } 
+                catch (Microsoft.Data.SqlClient.SqlException) { /* Table doesn't exist yet, ignore */ }
             }
 
-            // Simple In-Memory Similarity (Word Overlap)
-            var bestMatches = candidates
+            // Simple In-Memory Similarity for History
+            var bestHistoryMatches = candidates
                 .Select(c => new 
                 { 
                     c.Answer, 
@@ -82,11 +99,26 @@ public class ChatService : IChatService
                 })
                 .Where(x => x.Score > 0)
                 .OrderByDescending(x => x.Score)
-                .Take(2) // Top 2 context items
+                .Take(2) // Top 2 conversational history
                 .Select(x => x.Answer)
                 .ToList();
 
-            return bestMatches;
+            // Simple In-Memory Similarity for Facts
+            var bestFactMatches = facts
+                .Select(f => new 
+                { 
+                    f.Fact, 
+                    Score = keywords.Count(k => f.Category.ToLower().Contains(k) || f.Fact.ToLower().Contains(k)) 
+                })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .Take(3) // Top 3 concrete facts
+                .Select(x => "Ruppin Fact: " + x.Fact)
+                .ToList();
+
+            // Blend Both
+            bestHistoryMatches.AddRange(bestFactMatches);
+            return bestHistoryMatches;
         }
         catch (Exception ex)
         {
