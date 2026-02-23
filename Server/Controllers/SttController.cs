@@ -17,11 +17,11 @@ public class SttController : ControllerBase
 
     [HttpPost]
     [RequestSizeLimit(5 * 1024 * 1024)]
-    public async Task<IActionResult> Post([FromForm(Name = "audio")] IFormFile? audio)
+    public async Task<IActionResult> Post([FromForm(Name = "audio")] IFormFile? audio, [FromForm(Name = "language")] string language = "he")
     {
         try
         {
-            var transcript = await _speechService.TranscribeAsync(audio);
+            var transcript = await _speechService.TranscribeAsync(audio, language);
             return Ok(new { transcript });
         }
         catch (ArgumentException ex)

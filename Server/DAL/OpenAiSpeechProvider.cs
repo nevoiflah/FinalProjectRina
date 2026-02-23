@@ -23,7 +23,7 @@ public class OpenAiSpeechProvider : ISpeechProvider
             new AuthenticationHeaderValue("Bearer", _apiKey);
     }
 
-    public async Task<string> TranscribeAsync(Stream audioStream, string fileName)
+    public async Task<string> TranscribeAsync(Stream audioStream, string fileName, string language = "he")
     {
         // OpenAI Whisper API endpoint
         const string url = "https://api.openai.com/v1/audio/transcriptions";
@@ -44,6 +44,7 @@ public class OpenAiSpeechProvider : ISpeechProvider
 
         // Add model parameter
         content.Add(new StringContent("whisper-1"), "model");
+        content.Add(new StringContent(language), "language");
 
         Console.WriteLine($"[STT] Sending request to OpenAI Whisper API");
         

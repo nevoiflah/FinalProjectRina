@@ -40,9 +40,10 @@ export const getTtsAudio = async (text) => {
   return new Blob([buffer], { type: 'audio/wav' });
 };
 
-export const getSttTranscript = async (audioBlob) => {
+export const getSttTranscript = async (audioBlob, language = 'he') => {
   const form = new FormData();
   form.append('audio', audioBlob, 'speech.webm');
+  form.append('language', language);
   const response = await fetch(`${API_BASE}/api/stt`, {
     method: 'POST',
     body: form,
