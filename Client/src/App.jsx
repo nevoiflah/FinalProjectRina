@@ -17,10 +17,12 @@ const PrivateRoute = ({ children, adminOnly }) => {
 };
 
 import { LanguageProvider } from './context/LanguageContext';
+import AnimatedBackground from './components/AnimatedBackground';
 
 function App() {
   return (
     <LanguageProvider>
+      <AnimatedBackground />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
