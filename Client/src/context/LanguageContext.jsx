@@ -4,7 +4,7 @@ const LanguageContext = createContext();
 
 export const translations = {
     he: {
-        appTitle: 'אסיסטנט רופין האקדמי',
+        appTitle: 'היועץ האקדמי של רופין',
         appSubtitle: 'התחבר לחשבון הסטודנט שלך',
         loginTitle: 'כניסה למערכת',
         emailPlaceholder: 'כתובת דוא"ל',
