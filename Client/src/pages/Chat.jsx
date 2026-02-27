@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Send, LogOut, LayoutDashboard, Globe } from 'lucide-react';
+import { Mic, Send, LogOut, LayoutDashboard, Globe, Volume2, VolumeX } from 'lucide-react';
 import { sendChatMessage, getSttTranscript, getTtsAudio, endSession } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -8,6 +8,8 @@ const Chat = () => {
     const [messages, setMessages] = useState([]);
     const [inputVal, setInputVal] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [autoPlayVoice, setAutoPlayVoice] = useState(true);
     const [inputError, setInputError] = useState('');
     const [recording, setRecording] = useState(false);
     const messagesEndRef = useRef(null);
@@ -65,10 +67,40 @@ const Chat = () => {
             // Secretly append the language instruction to force the AI's response language.
             const textWithLangPrompt = `${text}\n\n[SYSTEM INSTRUCTION: ${t('aiPrompt')}]`;
             const response = await sendChatMessage(textWithLangPrompt, userId);
-            setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
+
+            try {
+                if (autoPlayVoice) {
+                    // Fetch audio while still showing "thinking" (loading is true)
+                    const audioBlob = await getTtsAudio(response.reply);
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+
+                    // Now show the text, stop loading, and play audio simultaneously
+                    setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
+                    setLoading(false);
+
+                    setIsSpeaking(true);
+                    audio.onended = () => {
+                        setIsSpeaking(false);
+                        URL.revokeObjectURL(audioUrl);
+                    };
+
+                    await audio.play();
+                } else {
+                    // If autoPlayVoice is disabled, just show the text immediately
+                    setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
+                    setLoading(false);
+                }
+            } catch (ttsErr) {
+                console.error("Failed to play TTS audio:", ttsErr);
+                // Fallback: show text even if audio fails
+                setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
+                setLoading(false);
+                setIsSpeaking(false);
+            }
+
         } catch (err) {
             setMessages(prev => [...prev, { sender: 'bot', text: 'Error communicating with server.' }]);
-        } finally {
             setLoading(false);
         }
     };
@@ -195,13 +227,28 @@ const Chat = () => {
                             <div className="message-content">{t('thinking')}</div>
                         </div>
                     )}
+                    {isSpeaking && (
+                        <div className="message bot" style={{ opacity: 0.8 }}>
+                            <div className="message-content">
+                                {language === 'he' ? 'הבוט מדבר...' : 'الروبوت يتحدث...'}
+                            </div>
+                        </div>
+                    )}
                     <div ref={messagesEndRef} />
                 </div>
 
                 <div className="chat-input-area" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                     {inputError && <div className="error-text" style={{ alignSelf: 'center' }}>{inputError}</div>}
 
-                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%', alignItems: 'center' }}>
+                        <button
+                            className="icon-btn"
+                            onClick={() => setAutoPlayVoice(!autoPlayVoice)}
+                            title={autoPlayVoice ? "Voice Replies On" : "Voice Replies Off"}
+                            style={{ background: autoPlayVoice ? 'var(--primary-blue)' : '#718096', padding: '10px' }}
+                        >
+                            {autoPlayVoice ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                        </button>
                         <button
                             className="icon-btn"
                             onClick={toggleRecording}
