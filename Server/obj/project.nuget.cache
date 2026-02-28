@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "8MlVyz3UA58=",
+  "dgSpecHash": "TzUMCXbhGeU=",
   "success": true,
-  "projectFilePath": "/Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
+  "projectFilePath": "/Users/nevoiflah/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
   "expectedPackageFiles": [
     "/Users/nevoiflah/.nuget/packages/azure.core/1.47.1/azure.core.1.47.1.nupkg.sha512",
     "/Users/nevoiflah/.nuget/packages/azure.identity/1.14.2/azure.identity.1.14.2.nupkg.sha512",

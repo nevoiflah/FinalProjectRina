@@ -1603,11 +1603,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
+      "projectUniqueName": "/Users/nevoiflah/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
       "projectName": "FinalProjectRina.Server",
-      "projectPath": "/Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
+      "projectPath": "/Users/nevoiflah/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
       "packagesPath": "/Users/nevoiflah/.nuget/packages/",
-      "outputPath": "/Users/nevoiflah/Desktop/Ruppin/שנה ג׳/FinalProjectRina/Server/obj/",
+      "outputPath": "/Users/nevoiflah/Projects/FinalProjectRina/Server/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/nevoiflah/.nuget/NuGet/NuGet.Config"
