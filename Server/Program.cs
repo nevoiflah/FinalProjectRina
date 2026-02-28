@@ -43,4 +43,4 @@ app.UseRouting();
 app.UseCors("AllowAll");
 app.MapControllers();
 
-app.Run();
+app.Run("http://localhost:5102");

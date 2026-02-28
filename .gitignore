@@ -29,3 +29,6 @@ FinalProjectRina.zip
 
 # Logs
 *.log
+
+# Security
+Server/appsettings.json

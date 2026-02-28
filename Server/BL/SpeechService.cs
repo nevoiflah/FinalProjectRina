@@ -5,7 +5,7 @@ namespace FinalProjectRina.Server.BL;
 
 public interface ISpeechService
 {
-    Task<string> TranscribeAsync(IFormFile? audioFile);
+    Task<string> TranscribeAsync(IFormFile? audioFile, string language = "he");
     Task<SpeechSynthesisResult> SynthesizeAsync(string? text);
 }
 
@@ -18,7 +18,7 @@ public class SpeechService : ISpeechService
         _speechProvider = speechProvider;
     }
 
-    public async Task<string> TranscribeAsync(IFormFile? audioFile)
+    public async Task<string> TranscribeAsync(IFormFile? audioFile, string language = "he")
     {
         if (audioFile is null || audioFile.Length == 0)
         {
@@ -26,7 +26,7 @@ public class SpeechService : ISpeechService
         }
 
         await using var stream = audioFile.OpenReadStream();
-        return await _speechProvider.TranscribeAsync(stream, audioFile.FileName);
+        return await _speechProvider.TranscribeAsync(stream, audioFile.FileName, language);
     }
 
     public Task<SpeechSynthesisResult> SynthesizeAsync(string? text)
