@@ -6,7 +6,6 @@ namespace FinalProjectRina.Server.Controllers;
 
 [ApiController]
 [Route("api/admin")]
-[Microsoft.AspNetCore.Cors.EnableCors("AllowAll")]
 public class AdminController : ControllerBase
 {
     private readonly IUserService _userService;

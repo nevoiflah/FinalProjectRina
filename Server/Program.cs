@@ -52,8 +52,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseCors("AllowAll");
 app.UseRouting();
+app.UseCors("AllowAll");
 app.MapControllers();
 
 app.Run("http://localhost:5102");
