@@ -1,3 +1,5 @@
+using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using FinalProjectRina.Server.DAL;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -37,6 +39,9 @@ public class KnowledgeFact
 
     [BsonElement("factText")]
     public string FactText { get; set; } = string.Empty;
+
+    [BsonElement("embedding")]
+    public float[]? Embedding { get; set; }
 }
 
 public interface IChatService
@@ -50,12 +55,16 @@ public class ChatService : IChatService
     private readonly IAiProvider _aiProvider;
     private readonly IMongoCollection<ChatSession> _sessions;
     private readonly IMongoCollection<KnowledgeFact> _knowledge;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _openAiApiKey;
 
-    public ChatService(IAiProvider aiProvider, IMongoDatabase database)
+    public ChatService(IAiProvider aiProvider, IMongoDatabase database, IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _aiProvider = aiProvider;
         _sessions = database.GetCollection<ChatSession>("chatSessions");
         _knowledge = database.GetCollection<KnowledgeFact>("ruppinKnowledge");
+        _httpClientFactory = httpClientFactory;
+        _openAiApiKey = configuration["OpenAI:ApiKey"] ?? "";
     }
 
     public async Task<string> GenerateReplyAsync(string? message, string? userId)
@@ -73,12 +82,44 @@ public class ChatService : IChatService
     {
         try
         {
-            var keywords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                               .Where(w => w.Length > 3)
-                               .Select(w => w.ToLower())
-                               .ToList();
+            var allFacts = await _knowledge.Find(Builders<KnowledgeFact>.Filter.Empty).ToListAsync();
+            var factsWithEmbeddings = allFacts.Where(f => f.Embedding != null).ToList();
 
-            if (!keywords.Any()) return new List<string>();
+            List<string> bestFactMatches;
+
+            if (factsWithEmbeddings.Count > 0)
+            {
+                // Semantic search via cosine similarity
+                var queryEmbedding = await GetEmbeddingAsync(query);
+                bestFactMatches = factsWithEmbeddings
+                    .Select(f => new { f.FactText, Score = CosineSimilarity(queryEmbedding, f.Embedding!) })
+                    .Where(x => x.Score > 0.3f)
+                    .OrderByDescending(x => x.Score)
+                    .Take(3)
+                    .Select(x => "Ruppin Fact: " + x.FactText)
+                    .ToList();
+            }
+            else
+            {
+                // Fallback: keyword matching
+                var keywords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                   .Where(w => w.Length > 2)
+                                   .Select(w => w.ToLower())
+                                   .ToList();
+                bestFactMatches = allFacts
+                    .Select(f => new { f.FactText, Score = keywords.Count(k => f.Category.ToLower().Contains(k) || f.FactText.ToLower().Contains(k)) })
+                    .Where(x => x.Score > 0)
+                    .OrderByDescending(x => x.Score)
+                    .Take(3)
+                    .Select(x => "Ruppin Fact: " + x.FactText)
+                    .ToList();
+            }
+
+            // Conversational history context (keyword-based — history is dynamic, no stored embeddings)
+            var keywords2 = query.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                .Where(w => w.Length > 2)
+                                .Select(w => w.ToLower())
+                                .ToList();
 
             var recentSessions = await _sessions
                 .Find(s => s.FinalResult != null)
@@ -87,21 +128,11 @@ public class ChatService : IChatService
                 .ToListAsync();
 
             var bestHistoryMatches = recentSessions
-                .Select(s => new { s.FinalResult, Score = keywords.Count(k => (s.InitialQuestion ?? "").ToLower().Contains(k)) })
+                .Select(s => new { s.FinalResult, Score = keywords2.Count(k => (s.InitialQuestion ?? "").ToLower().Contains(k)) })
                 .Where(x => x.Score > 0)
                 .OrderByDescending(x => x.Score)
                 .Take(2)
                 .Select(x => x.FinalResult!)
-                .ToList();
-
-            var allFacts = await _knowledge.Find(Builders<KnowledgeFact>.Filter.Empty).ToListAsync();
-
-            var bestFactMatches = allFacts
-                .Select(f => new { f.FactText, Score = keywords.Count(k => f.Category.ToLower().Contains(k) || f.FactText.ToLower().Contains(k)) })
-                .Where(x => x.Score > 0)
-                .OrderByDescending(x => x.Score)
-                .Take(3)
-                .Select(x => "Ruppin Fact: " + x.FactText)
                 .ToList();
 
             bestHistoryMatches.AddRange(bestFactMatches);
@@ -113,6 +144,41 @@ public class ChatService : IChatService
             return new List<string>();
         }
     }
+
+    private async Task<float[]> GetEmbeddingAsync(string text)
+    {
+        var http = _httpClientFactory.CreateClient();
+        http.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _openAiApiKey);
+
+        var response = await http.PostAsJsonAsync(
+            "https://api.openai.com/v1/embeddings",
+            new { model = "text-embedding-3-small", input = text });
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<EmbeddingResponse>();
+        return result!.Data[0].Embedding;
+    }
+
+    private static float CosineSimilarity(float[] a, float[] b)
+    {
+        float dot = 0, magA = 0, magB = 0;
+        for (int i = 0; i < a.Length; i++)
+        {
+            dot += a[i] * b[i];
+            magA += a[i] * a[i];
+            magB += b[i] * b[i];
+        }
+        return dot / (MathF.Sqrt(magA) * MathF.Sqrt(magB));
+    }
+
+    private record EmbeddingResponse(
+        [property: JsonPropertyName("data")] EmbeddingItem[] Data);
+
+    private record EmbeddingItem(
+        [property: JsonPropertyName("index")] int Index,
+        [property: JsonPropertyName("embedding")] float[] Embedding);
 
     private async Task LogChatInteraction(string userId, string userMessage, string botReply)
     {

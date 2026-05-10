@@ -12,10 +12,14 @@ public class AdminController : ControllerBase
     private readonly IUserService _userService;
     private readonly IMongoCollection<User> _users;
     private readonly IMongoCollection<ChatSession> _sessions;
+    private readonly IMongoDatabase _database;
+    private readonly IConfiguration _configuration;
 
-    public AdminController(IUserService userService, IMongoDatabase database)
+    public AdminController(IUserService userService, IMongoDatabase database, IConfiguration configuration)
     {
         _userService = userService;
+        _database = database;
+        _configuration = configuration;
         _users = database.GetCollection<User>("users");
         _sessions = database.GetCollection<ChatSession>("chatSessions");
     }
@@ -132,6 +136,15 @@ public class AdminController : ControllerBase
         };
 
         return Ok(new { dailyTraffic, degreeStats, durationStats });
+    }
+
+    [HttpPost("knowledge/reseed")]
+    public async Task<IActionResult> ReseedKnowledge([FromQuery] string adminId)
+    {
+        if (!IsAdmin(adminId)) return Unauthorized();
+        var apiKey = _configuration["OpenAI:ApiKey"] ?? "";
+        await KnowledgeSeeder.SeedAsync(_database, apiKey, force: true);
+        return Ok(new { message = "Knowledge base reseeded with embeddings." });
     }
 
     private bool IsAdmin(string userId)

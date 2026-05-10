@@ -42,7 +42,7 @@ using (var scope = app.Services.CreateScope())
     var userService = scope.ServiceProvider.GetRequiredService<IUserService>() as UserService;
     try
     {
-        SeedKnowledge(db);
+        await KnowledgeSeeder.SeedAsync(db, app.Configuration["OpenAI:ApiKey"] ?? "");
         userService?.PromoteUserToAdmin("nevo.iflah6@gmail.com");
     }
     catch (Exception ex)
@@ -56,25 +56,3 @@ app.UseCors("AllowAll");
 app.MapControllers();
 
 app.Run("http://localhost:5102");
-
-static void SeedKnowledge(IMongoDatabase db)
-{
-    var col = db.GetCollection<KnowledgeFact>("ruppinKnowledge");
-    if (col.CountDocuments(Builders<KnowledgeFact>.Filter.Empty) > 0) return;
-
-    col.InsertMany(new[]
-    {
-        new KnowledgeFact { Category = "Faculties", FactText = "Ruppin Academic Center offers Bachelor's and Master's degrees across four main faculties: Faculty of Management & Economics, Faculty of Engineering, Faculty of Social & Community Sciences, and Faculty of Marine Sciences." },
-        new KnowledgeFact { Category = "Faculties, Marine", FactText = "The Faculty of Marine Sciences is located at the Mikhmoret campus. It provides BSc degrees in Marine Biotechnology and Marine Sciences/Environment, and MSc/MA degrees. Ruppin is the only academic institution in Israel granting Bachelor's degrees in marine sciences." },
-        new KnowledgeFact { Category = "Admissions, General", FactText = "General admission requires a high school Bagrut diploma for Bachelor's programs and a Bachelor's degree for Master's programs. Specific thresholds apply per degree." },
-        new KnowledgeFact { Category = "Admissions, Computer Science", FactText = "Admission to Computer Science requires a Weighted Average of 105+ and a Math score of 90+ in 5 units." },
-        new KnowledgeFact { Category = "Admissions, Engineering", FactText = "Admission to Engineering (Electrical/Industrial) requires a Weighted Average of 100+ and a Math score of 80+ in 4 or 5 units." },
-        new KnowledgeFact { Category = "Admissions, Nursing", FactText = "Admission to the Nursing (BSN) program specifically requires a Psychometric exam score of 550+ and passing an interview." },
-        new KnowledgeFact { Category = "Admissions, Mechina", FactText = "Students missing required grades can enroll in the Pre-Academic Preparatory Program (Mechina) to replace their missing grades and improve their chances of acceptance." },
-        new KnowledgeFact { Category = "Scholarships", FactText = "Ruppin offers various merit-based scholarships. Eligible local students can receive up to $1,200 per year." },
-        new KnowledgeFact { Category = "Scholarships, Marine", FactText = "The Faculty of Marine Sciences provides a full-tuition (100%) scholarship for the first year of BSc studies for students entering with a psychometric exam score of 690 or higher." },
-        new KnowledgeFact { Category = "Scholarships, Logistics", FactText = "Scholarships are granted in collaboration with the Sachish family and the Shipping Administration for outstanding projects and Master's theses in Logistics and Global Supply Chain." },
-        new KnowledgeFact { Category = "Dorms, Housing", FactText = "The Ruppin Educational Center provides 400 dorm rooms for students. While on-campus housing is limited, the center offers assistance in finding off-campus housing in Emek Hefer." },
-        new KnowledgeFact { Category = "Tuition", FactText = "Estimated annual tuition is subsidized for specific BSc programs. Note that rates vary based on exact degree choices." }
-    });
-}
