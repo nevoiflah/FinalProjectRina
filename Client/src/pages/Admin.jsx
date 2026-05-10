@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ArrowRight, Globe } from 'lucide-react';
 import { fetchAdminStats } from '../api';
@@ -19,7 +19,7 @@ const Admin = () => {
             try {
                 const data = await fetchAdminStats(user?.userId || user?.UserId);
                 setStats(data);
-            } catch (err) {
+            } catch {
                 setError('Failed to load stats. Check server connection.');
             } finally {
                 setLoading(false);
@@ -37,62 +37,81 @@ const Admin = () => {
                 <Globe size={16} />
                 <span>{language === 'he' ? 'עברית' : 'العربية'}</span>
             </button>
-            <div className="chat-container" style={{ maxWidth: '1200px' }}>
+            <div className="chat-container admin-container">
                 <header className="chat-header">
-                    <div>
+                    <div className="chat-title-block">
                         <h2>{t('adminDashboard')}</h2>
-                        <div style={{ fontSize: '13px', opacity: 0.8 }}>{t('appTitle')}</div>
+                        <div className="chat-subtitle">{t('appTitle')}</div>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button className="icon-btn" onClick={() => navigate('/')} title={t('backToChat')} style={{ background: 'rgba(255,255,255,0.2)' }}>
+                    <div className="header-actions">
+                        <button className="icon-btn header-icon-btn" onClick={() => navigate('/')} title={t('backToChat')}>
                             <ArrowRight size={20} />
                         </button>
                         <button className="icon-btn" onClick={() => {
                             localStorage.removeItem('chatUser');
                             navigate('/login');
-                        }} title={t('logout')} style={{ background: 'rgba(255,255,255,0.2)' }}>
+                        }} title={t('logout')}>
                             <LogOut size={20} />
                         </button>
                     </div>
                 </header>
 
-                <div className="chat-messages" style={{ display: 'block' }}>
+                <div className="chat-messages admin-content">
                     {loading ? (
-                        <div>Loading insights...</div>
+                        <div className="loading-state">Loading insights...</div>
                     ) : error ? (
                         <div className="error-text">{error}</div>
                     ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '2px solid var(--primary-blue)', color: 'var(--primary-blue)' }}>
-                                        <th style={{ padding: '12px', width: '15%' }}>{t('user')}</th>
-                                        <th style={{ padding: '12px', width: '25%' }}>{t('firstTopic')}</th>
-                                        <th style={{ padding: '12px', width: '45%' }}>{t('finalAnalysis')}</th>
-                                        <th style={{ padding: '12px', width: '15%' }}>{t('date')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {stats.map((s, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#f7fafc' : 'white' }}>
-                                            <td style={{ padding: '12px', fontWeight: '500' }}>{s.userName}</td>
-                                            <td style={{ padding: '12px' }}>{s.question || 'N/A'}</td>
-                                            <td style={{ padding: '12px' }}>{s.result || 'N/A'}</td>
-                                            <td style={{ padding: '12px', color: '#718096', fontSize: '14px' }}>
-                                                {new Date(s.date).toLocaleDateString('he-IL')}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {stats.length === 0 && (
+                        <>
+                            <div className="admin-summary">
+                                <div className="stat-card">
+                                    <div className="stat-label">{t('finalAnalysis')}</div>
+                                    <div className="stat-value">{stats.length}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">{t('user')}</div>
+                                    <div className="stat-value">{new Set(stats.map(s => s.userName)).size}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">{t('date')}</div>
+                                    <div className="stat-value">
+                                        {stats[0]?.date ? new Date(stats[0].date).toLocaleDateString('he-IL') : '-'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="admin-table-wrap">
+                                <table className="admin-table">
+                                    <thead>
                                         <tr>
-                                            <td colSpan="4" style={{ padding: '24px', textAlign: 'center', color: '#718096' }}>
-                                                {t('noHistory')}
-                                            </td>
+                                            <th>{t('user')}</th>
+                                            <th>{t('firstTopic')}</th>
+                                            <th>{t('finalAnalysis')}</th>
+                                            <th>{t('date')}</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {stats.map((s, idx) => (
+                                            <tr key={idx}>
+                                                <td className="admin-user-cell">{s.userName}</td>
+                                                <td>{s.question || 'N/A'}</td>
+                                                <td>{s.result || 'N/A'}</td>
+                                                <td className="admin-date-cell">
+                                                    {new Date(s.date).toLocaleDateString('he-IL')}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {stats.length === 0 && (
+                                            <tr>
+                                                <td colSpan="4" className="empty-state">
+                                                    {t('noHistory')}
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
                     )}
                 </div>
             </div>

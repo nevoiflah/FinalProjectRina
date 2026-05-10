@@ -14,12 +14,14 @@ public class AdminController : ControllerBase
     private readonly IMongoCollection<ChatSession> _sessions;
     private readonly IMongoDatabase _database;
     private readonly IConfiguration _configuration;
+    private readonly KnowledgeCache _knowledgeCache;
 
-    public AdminController(IUserService userService, IMongoDatabase database, IConfiguration configuration)
+    public AdminController(IUserService userService, IMongoDatabase database, IConfiguration configuration, KnowledgeCache knowledgeCache)
     {
         _userService = userService;
         _database = database;
         _configuration = configuration;
+        _knowledgeCache = knowledgeCache;
         _users = database.GetCollection<User>("users");
         _sessions = database.GetCollection<ChatSession>("chatSessions");
     }
@@ -144,6 +146,7 @@ public class AdminController : ControllerBase
         if (!IsAdmin(adminId)) return Unauthorized();
         var apiKey = _configuration["OpenAI:ApiKey"] ?? "";
         await KnowledgeSeeder.SeedAsync(_database, apiKey, force: true);
+        _knowledgeCache.Invalidate();
         return Ok(new { message = "Knowledge base reseeded with embeddings." });
     }
 

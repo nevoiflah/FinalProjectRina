@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Globe } from 'lucide-react';
 import { loginUser } from '../api';
 import { useLanguage } from '../context/LanguageContext';

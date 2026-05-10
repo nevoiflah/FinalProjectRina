@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 const AnimatedBackground = () => {
     const canvasRef = useRef(null);
@@ -10,6 +10,7 @@ const AnimatedBackground = () => {
         let animationFrameId;
         let particles = [];
         let centerX, centerY, scale;
+        const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
         const resize = () => {
             canvas.width = window.innerWidth;
@@ -95,7 +96,7 @@ const AnimatedBackground = () => {
             const endY = height * 0.40;
 
             // 1. Fill entire background with exact Logo Green
-            ctx.fillStyle = '#6EBA42';
+            ctx.fillStyle = '#79bf59';
             ctx.fillRect(0, 0, width, height);
 
             // 2. Draw the White Stem sweeping infinitely downwards
@@ -143,9 +144,13 @@ const AnimatedBackground = () => {
             ctx.bezierCurveTo(control1X, control1Y, control2X, control2Y, width, endY);
             ctx.lineTo(width, height);
             ctx.lineTo(0, height);
-            ctx.fillStyle = '#245B8F'; // Logo Blue
+            ctx.fillStyle = '#2d6795'; // Logo Blue
             ctx.fill();
             ctx.closePath();
+
+            // A soft wash keeps the brand shape visible without fighting the UI panels.
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.fillRect(0, 0, width, height);
         };
 
         const animate = () => {
@@ -158,7 +163,9 @@ const AnimatedBackground = () => {
                 particle.draw();
             });
 
-            animationFrameId = requestAnimationFrame(animate);
+            if (!reducedMotionQuery.matches) {
+                animationFrameId = requestAnimationFrame(animate);
+            }
         };
 
         window.addEventListener('resize', resize);
@@ -180,8 +187,9 @@ const AnimatedBackground = () => {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                zIndex: -1,
-                pointerEvents: 'none'
+                zIndex: 0,
+                pointerEvents: 'none',
+                opacity: 0.9
             }}
         />
     );

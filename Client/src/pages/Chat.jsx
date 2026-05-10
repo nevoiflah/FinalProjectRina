@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Send, LogOut, LayoutDashboard, Globe, Volume2, VolumeX } from 'lucide-react';
 import { sendChatMessage, getSttTranscript, getTtsAudio, endSession } from '../api';
@@ -99,7 +99,7 @@ const Chat = () => {
                 setIsSpeaking(false);
             }
 
-        } catch (err) {
+        } catch {
             setMessages(prev => [...prev, { sender: 'bot', text: 'Error communicating with server.' }]);
             setLoading(false);
         }
@@ -200,17 +200,17 @@ const Chat = () => {
             </button>
             <div className="chat-container">
                 <header className="chat-header">
-                    <div style={{ marginRight: '80px' }}> {/* Space for the absolute toggle button */}
+                    <div className="chat-title-block with-toggle-space">
                         <h2>{user?.name || t('user')}</h2>
-                        <div style={{ fontSize: '13px', opacity: 0.8 }}>{t('appTitle')}</div>
+                        <div className="chat-subtitle">{t('appTitle')}</div>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div className="header-actions">
                         {isAdmin && (
-                            <button className="icon-btn" onClick={() => navigate('/admin')} title={t('adminDashboard')} style={{ background: 'rgba(255,255,255,0.2)' }}>
+                            <button className="icon-btn header-icon-btn" onClick={() => navigate('/admin')} title={t('adminDashboard')}>
                                 <LayoutDashboard size={20} />
                             </button>
                         )}
-                        <button className="icon-btn" onClick={handleLogout} title={t('logout')} style={{ background: 'rgba(255,255,255,0.2)' }}>
+                        <button className="icon-btn header-icon-btn" onClick={handleLogout} title={t('logout')}>
                             <LogOut size={20} />
                         </button>
                     </div>
@@ -224,35 +224,32 @@ const Chat = () => {
                     ))}
                     {loading && (
                         <div className="message bot">
-                            <div className="message-content">{t('thinking')}</div>
-                        </div>
-                    )}
-                    {isSpeaking && (
-                        <div className="message bot" style={{ opacity: 0.8 }}>
                             <div className="message-content">
-                                {language === 'he' ? 'הבוט מדבר...' : 'الروبوت يتحدث...'}
+                                <span className="typing-indicator" aria-label={t('thinking')}>
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </span>
                             </div>
                         </div>
                     )}
                     <div ref={messagesEndRef} />
                 </div>
 
-                <div className="chat-input-area" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                    {inputError && <div className="error-text" style={{ alignSelf: 'center' }}>{inputError}</div>}
+                <div className="chat-input-area">
+                    {inputError && <div className="error-text input-error-centered">{inputError}</div>}
 
-                    <div style={{ display: 'flex', gap: '8px', width: '100%', alignItems: 'center' }}>
+                    <div className="chat-input-row">
                         <button
-                            className="icon-btn"
+                            className={`icon-btn ${autoPlayVoice ? '' : 'voice-toggle-off'}`}
                             onClick={() => setAutoPlayVoice(!autoPlayVoice)}
                             title={autoPlayVoice ? "Voice Replies On" : "Voice Replies Off"}
-                            style={{ background: autoPlayVoice ? 'var(--primary-blue)' : '#718096', padding: '10px' }}
                         >
                             {autoPlayVoice ? <Volume2 size={20} /> : <VolumeX size={20} />}
                         </button>
                         <button
-                            className="icon-btn"
+                            className={`icon-btn ${recording ? 'recording-btn' : ''}`}
                             onClick={toggleRecording}
-                            style={{ background: recording ? '#e53e3e' : 'var(--primary-blue)' }}
                         >
                             {recording ? (
                                 <div className="equalizer">

@@ -1,9 +1,10 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Chat from './pages/Chat';
 import Admin from './pages/Admin';
+import { LanguageProvider } from './context/LanguageContext';
+import AnimatedBackground from './components/AnimatedBackground';
 
 const PrivateRoute = ({ children, adminOnly }) => {
   const userStr = localStorage.getItem('chatUser');
@@ -15,9 +16,6 @@ const PrivateRoute = ({ children, adminOnly }) => {
   }
   return children;
 };
-
-import { LanguageProvider } from './context/LanguageContext';
-import AnimatedBackground from './components/AnimatedBackground';
 
 function App() {
   return (

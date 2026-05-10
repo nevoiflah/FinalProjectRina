@@ -54,15 +54,15 @@ public class ChatService : IChatService
 {
     private readonly IAiProvider _aiProvider;
     private readonly IMongoCollection<ChatSession> _sessions;
-    private readonly IMongoCollection<KnowledgeFact> _knowledge;
+    private readonly KnowledgeCache _knowledgeCache;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _openAiApiKey;
 
-    public ChatService(IAiProvider aiProvider, IMongoDatabase database, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+    public ChatService(IAiProvider aiProvider, IMongoDatabase database, KnowledgeCache knowledgeCache, IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _aiProvider = aiProvider;
         _sessions = database.GetCollection<ChatSession>("chatSessions");
-        _knowledge = database.GetCollection<KnowledgeFact>("ruppinKnowledge");
+        _knowledgeCache = knowledgeCache;
         _httpClientFactory = httpClientFactory;
         _openAiApiKey = configuration["OpenAI:ApiKey"] ?? "";
     }
@@ -82,15 +82,29 @@ public class ChatService : IChatService
     {
         try
         {
-            var allFacts = await _knowledge.Find(Builders<KnowledgeFact>.Filter.Empty).ToListAsync();
+            var keywords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                               .Where(w => w.Length > 2)
+                               .Select(w => w.ToLower())
+                               .ToList();
+
+            // Run embedding call and history fetch in parallel
+            var embeddingTask = GetEmbeddingAsync(query);
+            var historyTask = _sessions
+                .Find(s => s.FinalResult != null)
+                .SortByDescending(s => s.StartedAt)
+                .Limit(100)
+                .ToListAsync();
+
+            await Task.WhenAll(embeddingTask, historyTask);
+
+            // Facts come from in-memory cache — no DB round-trip
+            var allFacts = await _knowledgeCache.GetFactsAsync();
             var factsWithEmbeddings = allFacts.Where(f => f.Embedding != null).ToList();
 
             List<string> bestFactMatches;
-
             if (factsWithEmbeddings.Count > 0)
             {
-                // Semantic search via cosine similarity
-                var queryEmbedding = await GetEmbeddingAsync(query);
+                var queryEmbedding = embeddingTask.Result;
                 bestFactMatches = factsWithEmbeddings
                     .Select(f => new { f.FactText, Score = CosineSimilarity(queryEmbedding, f.Embedding!) })
                     .Where(x => x.Score > 0.3f)
@@ -101,11 +115,6 @@ public class ChatService : IChatService
             }
             else
             {
-                // Fallback: keyword matching
-                var keywords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                                   .Where(w => w.Length > 2)
-                                   .Select(w => w.ToLower())
-                                   .ToList();
                 bestFactMatches = allFacts
                     .Select(f => new { f.FactText, Score = keywords.Count(k => f.Category.ToLower().Contains(k) || f.FactText.ToLower().Contains(k)) })
                     .Where(x => x.Score > 0)
@@ -115,20 +124,8 @@ public class ChatService : IChatService
                     .ToList();
             }
 
-            // Conversational history context (keyword-based — history is dynamic, no stored embeddings)
-            var keywords2 = query.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                                .Where(w => w.Length > 2)
-                                .Select(w => w.ToLower())
-                                .ToList();
-
-            var recentSessions = await _sessions
-                .Find(s => s.FinalResult != null)
-                .SortByDescending(s => s.StartedAt)
-                .Limit(100)
-                .ToListAsync();
-
-            var bestHistoryMatches = recentSessions
-                .Select(s => new { s.FinalResult, Score = keywords2.Count(k => (s.InitialQuestion ?? "").ToLower().Contains(k)) })
+            var bestHistoryMatches = historyTask.Result
+                .Select(s => new { s.FinalResult, Score = keywords.Count(k => (s.InitialQuestion ?? "").ToLower().Contains(k)) })
                 .Where(x => x.Score > 0)
                 .OrderByDescending(x => x.Score)
                 .Take(2)

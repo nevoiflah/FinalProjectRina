@@ -29,6 +29,7 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
 builder.Services.AddScoped<IAiProvider, PythonAiProvider>();
 builder.Services.AddScoped<ISpeechProvider, OpenAiSpeechProvider>();
 
+builder.Services.AddSingleton<KnowledgeCache>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ISpeechService, SpeechService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -51,8 +52,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseRouting();
 app.UseCors("AllowAll");
+app.UseRouting();
 app.MapControllers();
 
 app.Run("http://localhost:5102");
