@@ -162,6 +162,7 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  direction: ltr;
 }
 
 .chat-title-block {
@@ -286,11 +287,48 @@ body {
   cursor: pointer;
   flex: 0 0 48px;
   transition: background-color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  position: relative;
 }
 
 .icon-btn:hover {
   background: var(--primary-green);
   transform: scale(1.05);
+}
+
+/* Tooltip — appears above input-row buttons */
+.icon-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(15, 23, 42, 0.88);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 100;
+}
+
+.icon-btn[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Header buttons — tooltip appears below */
+.header-icon-btn[data-tooltip]::after {
+  bottom: unset;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.header-icon-btn[data-tooltip]:hover::after {
+  transform: translateX(-50%) translateY(0);
 }
 
 .header-icon-btn {
@@ -340,6 +378,42 @@ body {
   color: #e53e3e;
   font-size: 13px;
   margin-top: 8px;
+}
+
+.transcribing-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-blue);
+  margin-top: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+.transcribing-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(26, 54, 93, 0.2);
+  border-top-color: var(--primary-blue);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.chat-input--transcribing {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Language Toggle Button */

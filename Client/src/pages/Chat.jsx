@@ -12,6 +12,7 @@ const Chat = () => {
     const [autoPlayVoice, setAutoPlayVoice] = useState(true);
     const [inputError, setInputError] = useState('');
     const [recording, setRecording] = useState(false);
+    const [transcribing, setTranscribing] = useState(false);
     const messagesEndRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
@@ -147,11 +148,14 @@ const Chat = () => {
             mediaRecorderRef.current.onstop = async () => {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 if (audioBlob.size > 1000) {
+                    setTranscribing(true);
                     try {
                         const transcript = await getSttTranscript(audioBlob, language);
                         setInputVal(transcript);
                     } catch (error) {
                         console.error(error);
+                    } finally {
+                        setTranscribing(false);
                     }
                 }
             };
@@ -206,11 +210,11 @@ const Chat = () => {
                     </div>
                     <div className="header-actions">
                         {isAdmin && (
-                            <button className="icon-btn header-icon-btn" onClick={() => navigate('/admin')} title={t('adminDashboard')}>
+                            <button className="icon-btn header-icon-btn" onClick={() => navigate('/admin')} data-tooltip={t('adminDashboard')}>
                                 <LayoutDashboard size={20} />
                             </button>
                         )}
-                        <button className="icon-btn header-icon-btn" onClick={handleLogout} title={t('logout')}>
+                        <button className="icon-btn header-icon-btn" onClick={handleLogout} data-tooltip={t('logout')}>
                             <LogOut size={20} />
                         </button>
                     </div>
@@ -237,19 +241,27 @@ const Chat = () => {
                 </div>
 
                 <div className="chat-input-area">
-                    {inputError && <div className="error-text input-error-centered">{inputError}</div>}
+                    {transcribing ? (
+                        <div className="transcribing-indicator">
+                            <span className="transcribing-spinner" />
+                            {t('transcribing')}
+                        </div>
+                    ) : (
+                        inputError && <div className="error-text input-error-centered">{inputError}</div>
+                    )}
 
                     <div className="chat-input-row">
                         <button
                             className={`icon-btn ${autoPlayVoice ? '' : 'voice-toggle-off'}`}
                             onClick={() => setAutoPlayVoice(!autoPlayVoice)}
-                            title={autoPlayVoice ? "Voice Replies On" : "Voice Replies Off"}
+                            data-tooltip={autoPlayVoice ? t('voiceOn') : t('voiceOff')}
                         >
                             {autoPlayVoice ? <Volume2 size={20} /> : <VolumeX size={20} />}
                         </button>
                         <button
                             className={`icon-btn ${recording ? 'recording-btn' : ''}`}
                             onClick={toggleRecording}
+                            data-tooltip={recording ? t('stopRecording') : t('startRecording')}
                         >
                             {recording ? (
                                 <div className="equalizer">
@@ -264,16 +276,17 @@ const Chat = () => {
                         </button>
                         <input
                             type="text"
-                            className="chat-input"
+                            className={`chat-input${transcribing ? ' chat-input--transcribing' : ''}`}
                             placeholder={recording ? t('listening') : t('chatPlaceholder')}
                             value={inputVal}
+                            disabled={transcribing}
                             onChange={(e) => {
                                 setInputVal(e.target.value);
                                 setInputError('');
                             }}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         />
-                        <button className="icon-btn" onClick={handleSend} disabled={loading}>
+                        <button className="icon-btn" onClick={handleSend} disabled={loading || transcribing} data-tooltip={t('sendMessage')}>
                             <Send size={20} />
                         </button>
                     </div>
