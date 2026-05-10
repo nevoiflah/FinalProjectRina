@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/nevoiflah/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj": {}
+    "/Volumes/MEMORY/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj": {}
   },
   "projects": {
-    "/Users/nevoiflah/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj": {
+    "/Volumes/MEMORY/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/nevoiflah/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
+        "projectUniqueName": "/Volumes/MEMORY/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
         "projectName": "FinalProjectRina.Server",
-        "projectPath": "/Users/nevoiflah/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
+        "projectPath": "/Volumes/MEMORY/Projects/FinalProjectRina/Server/FinalProjectRina.Server.csproj",
         "packagesPath": "/Users/nevoiflah/.nuget/packages/",
-        "outputPath": "/Users/nevoiflah/Projects/FinalProjectRina/Server/obj/",
+        "outputPath": "/Volumes/MEMORY/Projects/FinalProjectRina/Server/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/nevoiflah/.nuget/NuGet/NuGet.Config"
@@ -45,9 +45,9 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "Microsoft.Data.SqlClient": {
+            "MongoDB.Driver": {
               "target": "Package",
-              "version": "[6.1.3, )"
+              "version": "[3.8.0, )"
             }
           },
           "imports": [

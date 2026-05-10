@@ -1,26 +1,42 @@
-using System.Data;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver;
 
 namespace FinalProjectRina.Server.BL;
 
 public class User
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.String)]
     public string UserId { get; set; } = string.Empty;
+
+    [BsonElement("name")]
     public string Name { get; set; } = string.Empty;
+
+    [BsonElement("email")]
     public string Email { get; set; } = string.Empty;
+
+    [BsonElement("organization")]
     public string? Organization { get; set; }
 
     [JsonIgnore]
+    [BsonElement("passwordHash")]
     public string PasswordHash { get; set; } = string.Empty;
 
+    [BsonElement("isAdmin")]
     public bool IsAdmin { get; set; }
+
+    [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; }
+
+    [BsonElement("lastLoginAt")]
     public DateTime? LastLoginAt { get; set; }
+
+    [BsonElement("isActive")]
     public bool IsActive { get; set; } = true;
 }
 
@@ -39,201 +55,148 @@ public interface IUserService
 
 public class UserService : IUserService
 {
-    private readonly string _connectionString;
-    private static bool _schemaEnsured;
-    private static readonly object SchemaLock = new();
+    private readonly IMongoCollection<User> _users;
 
-    public UserService(IConfiguration configuration)
+    public UserService(IMongoDatabase database)
     {
-        var connStr = configuration.GetConnectionString("myProjDB");
-        if (string.IsNullOrWhiteSpace(connStr))
-        {
-            throw new InvalidOperationException("Connection string 'myProjDB' was not found in configuration.");
-        }
-
-        // Ensure connection string has required security settings
-        if (!connStr.Contains("TrustServerCertificate", StringComparison.OrdinalIgnoreCase))
-        {
-            _connectionString = connStr + ";TrustServerCertificate=True;Encrypt=True";
-        }
-        else
-        {
-            _connectionString = connStr;
-        }
-
-        EnsureSchema();
+        _users = database.GetCollection<User>("users");
+        _users.Indexes.CreateOne(new CreateIndexModel<User>(
+            Builders<User>.IndexKeys.Ascending(u => u.Email),
+            new CreateIndexOptions { Unique = true }));
     }
 
-    public IEnumerable<User> GetUsers()
-    {
-        const string sql = """
-            SELECT UserId, Name, Email, Organization, PasswordHash, IsAdmin, CreatedAt, LastLoginAt, IsActive
-            FROM dbo.NLA_Users
-            ORDER BY CreatedAt
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        
-        try
-        {
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            var users = new List<User>();
-            while (reader.Read())
-            {
-                users.Add(MapUser(reader));
-            }
-            return users;
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to retrieve users from database: {ex.Message}", ex);
-        }
-    }
+    public IEnumerable<User> GetUsers() =>
+        _users.Find(Builders<User>.Filter.Empty).SortBy(u => u.CreatedAt).ToList();
 
     public User? FindByEmail(string? email)
     {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return null;
-        }
-
-        return GetUserByEmail(NormalizeEmail(email));
+        if (string.IsNullOrWhiteSpace(email)) return null;
+        var normalized = NormalizeEmail(email);
+        return _users.Find(u => u.Email == normalized).FirstOrDefault();
     }
 
     public User? FindById(string? userId)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return null;
-        }
-
-        return GetUserById(userId.Trim());
+        if (string.IsNullOrWhiteSpace(userId)) return null;
+        var id = userId.Trim();
+        return _users.Find(u => u.UserId == id).FirstOrDefault();
     }
 
     public User Register(string? name, string? email, string? organization, string? password)
     {
         if (string.IsNullOrWhiteSpace(name))
-        {
             throw new ArgumentException("Name is required", nameof(name));
-        }
-
         if (string.IsNullOrWhiteSpace(email))
-        {
             throw new ArgumentException("Email is required", nameof(email));
-        }
-
         if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
-        {
             throw new ArgumentException("Password must be at least 6 characters", nameof(password));
-        }
 
-        var normalizedEmail = NormalizeEmail(email);
         var user = new User
         {
             UserId = Guid.NewGuid().ToString("N"),
             Name = name.Trim(),
-            Email = normalizedEmail,
+            Email = NormalizeEmail(email),
             Organization = string.IsNullOrWhiteSpace(organization) ? null : organization.Trim(),
             PasswordHash = HashPassword(password),
             IsAdmin = false,
             CreatedAt = DateTime.UtcNow,
-            LastLoginAt = null,
             IsActive = true
         };
 
-        PersistUser(user);
+        try
+        {
+            _users.InsertOne(user);
+        }
+        catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+        {
+            throw new InvalidOperationException("User with this email already exists", ex);
+        }
         return user;
     }
 
     public User? Authenticate(string? email, string? password)
     {
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password))
-        {
-            return null;
-        }
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password)) return null;
 
-        var stored = GetUserByEmail(NormalizeEmail(email));
-        if (stored is null || !stored.IsActive || !VerifyPassword(password, stored.PasswordHash))
-        {
-            return null;
-        }
+        var user = FindByEmail(email);
+        if (user is null || !user.IsActive || !VerifyPassword(password, user.PasswordHash)) return null;
 
-        stored.LastLoginAt = UpdateLastLogin(stored.UserId);
-        return stored;
+        var now = DateTime.UtcNow;
+        _users.UpdateOne(u => u.UserId == user.UserId, Builders<User>.Update.Set(u => u.LastLoginAt, now));
+        user.LastLoginAt = now;
+        return user;
     }
 
     public User? UpdateProfile(string? userId, string? name, string? organization, string? password)
     {
         if (string.IsNullOrWhiteSpace(userId))
-        {
             throw new ArgumentException("User ID is required", nameof(userId));
-        }
 
-        var user = GetUserById(userId.Trim());
-        if (user is null)
-        {
-            return null;
-        }
+        var user = FindById(userId);
+        if (user is null) return null;
 
-        // Update name if provided
+        var updates = new List<UpdateDefinition<User>>();
+
         if (!string.IsNullOrWhiteSpace(name))
         {
             user.Name = name.Trim();
+            updates.Add(Builders<User>.Update.Set(u => u.Name, user.Name));
         }
 
-        // Update organization (allow null to clear it)
         user.Organization = string.IsNullOrWhiteSpace(organization) ? null : organization.Trim();
+        updates.Add(Builders<User>.Update.Set(u => u.Organization, user.Organization));
 
-        // Update password if provided
         if (!string.IsNullOrWhiteSpace(password))
         {
             if (password.Length < 6)
-            {
                 throw new ArgumentException("Password must be at least 6 characters", nameof(password));
-            }
             user.PasswordHash = HashPassword(password);
+            updates.Add(Builders<User>.Update.Set(u => u.PasswordHash, user.PasswordHash));
         }
 
-        UpdateUserInDb(user);
+        if (updates.Count > 0)
+            _users.UpdateOne(u => u.UserId == user.UserId, Builders<User>.Update.Combine(updates));
+
         return user;
     }
 
     public bool DeleteUser(string? userId)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return false;
-        }
+        if (string.IsNullOrWhiteSpace(userId)) return false;
+        var result = _users.DeleteOne(u => u.UserId == userId.Trim());
+        return result.DeletedCount > 0;
+    }
 
-        const string sql = """
-            DELETE FROM dbo.NLA_Users
-            WHERE UserId = @UserId
-            """;
+    public bool ToggleAdmin(string? userId, bool isAdmin)
+    {
+        if (string.IsNullOrWhiteSpace(userId)) return false;
+        var result = _users.UpdateOne(
+            u => u.UserId == userId.Trim(),
+            Builders<User>.Update.Set(u => u.IsAdmin, isAdmin));
+        return result.ModifiedCount > 0;
+    }
 
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@UserId", userId.Trim());
+    public bool ToggleStatus(string? userId, bool isActive)
+    {
+        if (string.IsNullOrWhiteSpace(userId)) return false;
+        var result = _users.UpdateOne(
+            u => u.UserId == userId.Trim(),
+            Builders<User>.Update.Set(u => u.IsActive, isActive));
+        return result.ModifiedCount > 0;
+    }
 
-        try
-        {
-            conn.Open();
-            var rowsAffected = cmd.ExecuteNonQuery();
-            return rowsAffected > 0;
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to delete user: {ex.Message}", ex);
-        }
+    public void PromoteUserToAdmin(string email)
+    {
+        var user = FindByEmail(email);
+        if (user != null && !user.IsAdmin)
+            ToggleAdmin(user.UserId, true);
     }
 
     private static string NormalizeEmail(string email)
     {
         try
         {
-            var address = new MailAddress(email.Trim());
-            return address.Address.ToLowerInvariant();
+            return new MailAddress(email.Trim()).Address.ToLowerInvariant();
         }
         catch (FormatException)
         {
@@ -244,303 +207,9 @@ public class UserService : IUserService
     private static string HashPassword(string password)
     {
         using var sha = SHA256.Create();
-        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToHexString(bytes);
+        return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(password)));
     }
 
     private static bool VerifyPassword(string password, string storedHash) =>
         HashPassword(password) == storedHash;
-
-    private SqlConnection CreateConnection() => new(_connectionString);
-
-    private void EnsureSchema()
-    {
-        if (_schemaEnsured)
-        {
-            return;
-        }
-
-        lock (SchemaLock)
-        {
-            if (_schemaEnsured)
-            {
-                return;
-            }
-
-            const string sql = """
-                IF OBJECT_ID('dbo.NLA_Users', 'U') IS NOT NULL
-                BEGIN
-                    IF EXISTS (
-                        SELECT 1
-                        FROM sys.columns
-                        WHERE object_id = OBJECT_ID('dbo.NLA_Users')
-                          AND name = 'Organization'
-                          AND is_nullable = 0
-                    )
-                    BEGIN
-                        ALTER TABLE dbo.NLA_Users ALTER COLUMN Organization NVARCHAR(200) NULL;
-                    END
-                END
-                """;
-
-            try
-            {
-                using var conn = CreateConnection();
-                using var cmd = new SqlCommand(sql, conn);
-                conn.Open();
-                cmd.ExecuteNonQuery();
-
-                // Ensure ChatSessions Table
-                const string chatSql = """
-                    IF OBJECT_ID('dbo.NLA_ChatSessions', 'U') IS NULL
-                    BEGIN
-                        CREATE TABLE dbo.NLA_ChatSessions (
-                            SessionId INT IDENTITY(1,1) PRIMARY KEY,
-                            UserId NVARCHAR(50) NOT NULL,
-                            InitialQuestion NVARCHAR(MAX) NULL,
-                            FinalResult NVARCHAR(MAX) NULL,
-                            StartedAt DATETIME2 DEFAULT GETUTCDATE(),
-                            EndedAt DATETIME2 NULL
-                        );
-                    END
-                    """;
-                using var chatCmd = new SqlCommand(chatSql, conn);
-                chatCmd.ExecuteNonQuery();
-
-                _schemaEnsured = true;
-            }
-            catch (SqlException ex)
-            {
-                Console.WriteLine($"Warning: Could not ensure NLA_Users schema: {ex.Message}");
-                _schemaEnsured = true;
-            }
-        }
-    }
-
-    private void PersistUser(User user)
-    {
-        const string sql = """
-            INSERT INTO dbo.NLA_Users
-                (UserId, Name, Email, Organization, PasswordHash, IsAdmin, CreatedAt, LastLoginAt, IsActive)
-            VALUES
-                (@UserId, @Name, @Email, @Organization, @PasswordHash, @IsAdmin, @CreatedAt, @LastLoginAt, @IsActive)
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@UserId", user.UserId);
-        cmd.Parameters.AddWithValue("@Name", user.Name);
-        cmd.Parameters.AddWithValue("@Email", user.Email);
-        cmd.Parameters.Add("@Organization", SqlDbType.NVarChar, 200).Value = (object?)user.Organization ?? DBNull.Value;
-        cmd.Parameters.AddWithValue("@PasswordHash", user.PasswordHash);
-        cmd.Parameters.AddWithValue("@IsAdmin", user.IsAdmin);
-        cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
-        cmd.Parameters.Add("@LastLoginAt", SqlDbType.DateTime2).Value = (object?)user.LastLoginAt ?? DBNull.Value;
-        cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
-
-        try
-        {
-            conn.Open();
-            cmd.ExecuteNonQuery();
-        }
-        catch (SqlException ex) when (ex.Number is 2627 or 2601)
-        {
-            throw new InvalidOperationException("User with this email already exists", ex);
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to create user: {ex.Message}", ex);
-        }
-    }
-
-    private void UpdateUserInDb(User user)
-    {
-        const string sql = """
-            UPDATE dbo.NLA_Users
-            SET Name = @Name,
-                Organization = @Organization,
-                PasswordHash = @PasswordHash
-            WHERE UserId = @UserId
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@UserId", user.UserId);
-        cmd.Parameters.AddWithValue("@Name", user.Name);
-        cmd.Parameters.Add("@Organization", SqlDbType.NVarChar, 200).Value = (object?)user.Organization ?? DBNull.Value;
-        cmd.Parameters.AddWithValue("@PasswordHash", user.PasswordHash);
-
-        try
-        {
-            conn.Open();
-            cmd.ExecuteNonQuery();
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to update user: {ex.Message}", ex);
-        }
-    }
-
-    private User? GetUserByEmail(string normalizedEmail)
-    {
-        const string sql = """
-            SELECT TOP 1 UserId, Name, Email, Organization, PasswordHash, IsAdmin, CreatedAt, LastLoginAt, IsActive
-            FROM dbo.NLA_Users
-            WHERE Email = @Email
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@Email", normalizedEmail);
-        
-        try
-        {
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            return reader.Read() ? MapUser(reader) : null;
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to find user by email: {ex.Message}", ex);
-        }
-    }
-
-    private User? GetUserById(string userId)
-    {
-        const string sql = """
-            SELECT TOP 1 UserId, Name, Email, Organization, PasswordHash, IsAdmin, CreatedAt, LastLoginAt, IsActive
-            FROM dbo.NLA_Users
-            WHERE UserId = @UserId
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@UserId", userId);
-        
-        try
-        {
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            return reader.Read() ? MapUser(reader) : null;
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to find user by ID: {ex.Message}", ex);
-        }
-    }
-
-    private static User MapUser(SqlDataReader reader)
-    {
-        return new User
-        {
-            UserId = reader.GetString(reader.GetOrdinal("UserId")),
-            Name = reader.GetString(reader.GetOrdinal("Name")),
-            Email = reader.GetString(reader.GetOrdinal("Email")),
-            Organization = reader.IsDBNull(reader.GetOrdinal("Organization"))
-                ? null
-                : reader.GetString(reader.GetOrdinal("Organization")),
-            PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
-            IsAdmin = reader.GetBoolean(reader.GetOrdinal("IsAdmin")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            LastLoginAt = reader.IsDBNull(reader.GetOrdinal("LastLoginAt"))
-                ? null
-                : reader.GetDateTime(reader.GetOrdinal("LastLoginAt")),
-            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-        };
-    }
-
-    private DateTime? UpdateLastLogin(string userId)
-    {
-        const string sql = """
-            UPDATE dbo.NLA_Users
-            SET LastLoginAt = SYSUTCDATETIME()
-            OUTPUT inserted.LastLoginAt
-            WHERE UserId = @UserId
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@UserId", userId);
-        
-        try
-        {
-            conn.Open();
-            var result = cmd.ExecuteScalar();
-            return result is DateTime dt ? dt : null;
-        }
-        catch (SqlException ex)
-        {
-            Console.WriteLine($"Warning: Could not update last login time: {ex.Message}");
-            return null;
-        }
-    }
-
-    public bool ToggleAdmin(string? userId, bool isAdmin)
-    {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return false;
-        }
-
-        const string sql = """
-            UPDATE dbo.NLA_Users
-            SET IsAdmin = @IsAdmin
-            WHERE UserId = @UserId
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@UserId", userId.Trim());
-        cmd.Parameters.AddWithValue("@IsAdmin", isAdmin);
-
-        try
-        {
-            conn.Open();
-            var rowsAffected = cmd.ExecuteNonQuery();
-            return rowsAffected > 0;
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to update admin status: {ex.Message}", ex);
-        }
-    }
-
-    public bool ToggleStatus(string? userId, bool isActive)
-    {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return false;
-        }
-
-        const string sql = """
-            UPDATE dbo.NLA_Users
-            SET IsActive = @IsActive
-            WHERE UserId = @UserId
-            """;
-
-        using var conn = CreateConnection();
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@UserId", userId.Trim());
-        cmd.Parameters.AddWithValue("@IsActive", isActive);
-
-        try
-        {
-            conn.Open();
-            var rowsAffected = cmd.ExecuteNonQuery();
-            return rowsAffected > 0;
-        }
-        catch (SqlException ex)
-        {
-            throw new InvalidOperationException($"Failed to update account status: {ex.Message}", ex);
-        }
-    }
-
-    public void PromoteUserToAdmin(string email)
-    {
-        var user = GetUserByEmail(NormalizeEmail(email));
-        if (user != null && !user.IsAdmin)
-        {
-            ToggleAdmin(user.UserId, true);
-        }
-    }
 }
