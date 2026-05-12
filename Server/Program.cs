@@ -54,6 +54,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseRouting();
 app.UseCors("AllowAll");
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 app.MapControllers();
 
-app.Run("http://localhost:5102");
+app.Run();

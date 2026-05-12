@@ -78,7 +78,10 @@ Your goal is to help students choose a degree based on their grades, interests, 
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "healthy"})
+    return jsonify({
+        "status": "healthy",
+        "openaiConfigured": bool(api_key)
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

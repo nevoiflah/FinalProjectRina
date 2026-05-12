@@ -5,6 +5,8 @@ Thumbs.db
 # Build Artifacts
 **/bin/
 **/obj/
+**/publish/
+**/publish-check/
 **/cmake-build-*/
 
 # Python

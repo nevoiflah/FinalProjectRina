@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../buildMultiTargeting/FinalProjectRina.Server.props" />
-</Project>
