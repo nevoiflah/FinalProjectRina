@@ -63,7 +63,7 @@
 3.  **ממשק ניהול (Admin Dashboard)**: כלי בקרה למנהלי המערכת המאפשר מעקב אחר משתמשים, ניתוח שיחות (שאלה ראשונה מול תוצאה סופית) ושיפור מתמיד של המענה.
 4.  **OpenAI Whisper & TTS**: לזיהוי והפקת דיבור ברמה אנושית.
 
-המערכת מספקת ממשק אחיד ופשוט לשימוש המאפשר למפתחים ולמשתמשי קצה לתקשר עם רובוטים באמצעות שפה טבעית. המערכת כוללת תמיכה מלאה בבינלאומיות (עברית/אנגלית) ועיצוב מודרני המותאם למוסדות אקדמיים (Ruppin Academic Advisor).
+המערכת מספקת ממשק אחיד ופשוט לשימוש המאפשר למפתחים ולמשתמשי קצה לתקשר עם רובוטים באמצעות שפה טבעית. המערכת כוללת תמיכה מלאה בבינלאומיות (עברית/ערבית) ועיצוב מודרני המותאם למוסדות אקדמיים (Ruppin Academic Advisor).
 
 ## הצגת הבעיה והצורך
 
@@ -113,16 +113,18 @@ V.  **מצב שיחה (Conversation Mode)**: דיאלוג קולי רציף.
     *   `app.py`: מקבל את ההודעה + הקשר (Context) מה-C#, בונה את ה-System Prompt הדינמי ומחזיר את תשובת ה-AI.
 
 #### 2. צד לקוח (Frontend)
-*   **admin.html**: דף ניהול חדש, מציג טבלת משתמשים עם היסטוריית שיחות (שאלה ראשונה ותוצאה סופית).
-*   **Internationalization**: תמיכה מלאה בעברית ואנגלית (`translations.js`), כולל שמירת העדפות משתמש.
+*   **React/Vite SPA**: אפליקציית צד לקוח הכוללת דפי התחברות, הרשמה, צ׳אט ולוח ניהול.
+*   **Admin.jsx**: דף ניהול המציג משתמשים והיסטוריית שיחות (שאלה ראשונה ותוצאה סופית).
+*   **Internationalization**: תמיכה מלאה בעברית וערבית באמצעות `LanguageContext.jsx`, כולל שמירת העדפות משתמש.
 *   **מיתוג אקדמי**: עיצוב מותאם למרכז האקדמי רופין (לוגו, צבעים).
 
-#### 3. מסד נתונים (SQL Server)
-*   `NLA_Users`: ניהול משתמשים (כולל שדה `IsAdmin`).
-*   `NLA_ChatSessions`: טבלה חדשה לאימון המערכת. שומרת:
+#### 3. מסד נתונים (MongoDB Atlas)
+*   `users`: ניהול משתמשים (כולל שדה `isAdmin`).
+*   `chatSessions`: אוסף שיחות לתמיכה בניתוח וב-RAG. שומר:
     *   `InitialQuestion`: השאלה שפתחה את השיחה.
     *   `FinalResult`: העצה שניתנה בסוף.
     *   `UserId`, `StartedAt`, `EndedAt`.
+*   `knowledge`: בסיס ידע ייעודי הכולל תכני ייעוץ והטמעות (embeddings) לחיפוש סמנטי.
 
 ## דרישות המערכת
 
@@ -136,7 +138,7 @@ V.  **מצב שיחה (Conversation Mode)**: דיאלוג קולי רציף.
     *   איסוף נתונים אוטומטי משיחות שהסתיימו בהצלחה.
     *   אחזור מידע בזמן אמת עבור משתמשים חדשים.
 *   **תמיכה בשפות**:
-    *   החלפת שפה בזמן אמת (EN/HE).
+    *   החלפת שפה בזמן אמת (HE/AR).
     *   שמירת העדפת שפה.
 
 ---
@@ -148,20 +150,24 @@ V.  **מצב שיחה (Conversation Mode)**: דיאלוג קולי רציף.
 ### ארכיטקטורת המערכת החדשה
 
 ```
-[ הדפדפן - Client ]
-  |--> Admin Dashboard (admin.html)
-  |--> Chat Interface (index.html)
+[ הדפדפן - React/Vite Client ]
+  |--> Login / Register
+  |--> Chat Interface
+  |--> Admin Dashboard
         |
       HTTPS / REST
         |
 [ שרת ראשי - C# ASP.NET Core ]
-  |-- AdminController (Stats)
+  |-- UserController
+  |-- AdminController
   |-- ChatController
+  |-- SttController / TtsController
   |-- BL: ChatService (RAG Logic)
         |
-        |---[ SQL Server ]
-        |     |-- NLA_Users
-        |     |-- NLA_ChatSessions (Training Data)
+        |---[ MongoDB Atlas ]
+        |     |-- users
+        |     |-- chatSessions
+        |     |-- knowledge
         |
       HTTP (Internal)
         |
@@ -176,21 +182,29 @@ V.  **מצב שיחה (Conversation Mode)**: דיאלוג קולי רציף.
 
 ### תכנון מסד הנתונים (מורחב)
 
-נוספה טבלת `NLA_ChatSessions` לתמיכה ב-RAG ובניהול:
+המערכת משתמשת ב-MongoDB Atlas. האוסף המרכזי לניתוח שיחות הוא `chatSessions`:
 
 | שדה | סוג | תיאור |
 |---|---|---|
-| SessionId | INT (PK) | מזהה ייחודי |
-| UserId | NVARCHAR | מזהה משתמש |
-| **InitialQuestion** | NVARCHAR | השאלה הראשונה בשיחה (לניתוח מנהל) |
-| **FinalResult** | NVARCHAR | התשובה הסופית (לאימון המערכת) |
-| StartedAt | DATETIME | זמן התחלה |
+| `_id` | ObjectId/String | מזהה ייחודי |
+| `userId` | String | מזהה משתמש |
+| `initialQuestion` | String | השאלה הראשונה בשיחה (לניתוח מנהל) |
+| `finalResult` | String | התשובה הסופית או סיכום התוצאה |
+| `startedAt` | DateTime | זמן התחלה |
+| `endedAt` | DateTime | זמן סיום, אם השיחה הסתיימה |
+
+אוספים נוספים:
+
+| אוסף | תיאור |
+|---|---|
+| `users` | פרטי משתמשים, הרשאות מנהל, סטטוס פעילות ותאריך התחברות אחרון |
+| `knowledge` | בסיס ידע אקדמי והטמעות OpenAI לחיפוש סמנטי |
 
 ## מימוש והטמעה
 
 ### אתגרים וחידושים (מעודכן)
 
-1.  **מימוש RAG ללא Vector DB**: האתגר היה לממש מנגנון זיכרון ללא תשתיות כבדות. הפתרון: שימוש בחיפוש SQL חכם וסינון מילות מפתח בזיכרון (In-Memory Processing) ב-C#, המאפשר זמני תגובה מהירים מאוד ועלות נמוכה.
+1.  **מימוש RAG ללא תשתית חיפוש כבדה**: האתגר היה לממש מנגנון זיכרון ללא תפעול Vector DB נפרד. הפתרון: שימוש ב-MongoDB Atlas, הטמעות OpenAI, מטמון ידע ב-C#, וחיפוש סמנטי/טקסטואלי בעלות תפעול נמוכה.
 2.  **סנכרון בין שפות**: ניהול ממשק דו-לשוני (RTL/LTR) שמשפיע גם על ה-System Prompt של ה-AI (הנחיה לענות בשפה הנכונה).
 3.  **ניהול סטייט ב-Python**: המעבר ל-Microservice ב-Python דרש העברת ה-Context בצורה יעילה בכל בקשה (Stateless), מה שנפתר ע"י הזרקת ההיסטוריה לתוך ה-Body של הבקשה משרת ה-C#.
 
@@ -205,15 +219,17 @@ V.  **מצב שיחה (Conversation Mode)**: דיאלוג קולי רציף.
 ### נספח א׳: מבנה קבצי הפרויקט (מעודכן)
 
 **Frontend**:
-*   `admin.html` - דף ניהול ומעקב.
-*   `translations.js` - מילון מונחים (EN/HE).
-*   `logo.svg` - מיתוג רופין.
+*   `Client/src/pages/Admin.jsx` - דף ניהול ומעקב.
+*   `Client/src/pages/Chat.jsx` - ממשק הצ׳אט הקולי והטקסטואלי.
+*   `Client/src/context/LanguageContext.jsx` - ניהול שפות ומילון מונחים.
+*   `Client/public/staticwebapp.config.json` - תמיכה ברענון עמודים ב-Azure Static Web Apps.
 
 **Backend (C#)**:
 *   `Controllers/AdminController.cs` - API לנתוני מנהל.
 *   `DAL/PythonAiProvider.cs` - גשר לשירות ה-Python.
-*   `ChatSessionsTable.sql` - סקריפט מסד נתונים חדש.
+*   `BL/KnowledgeSeeder.cs` - טעינת בסיס ידע והטמעות.
+*   `BL/KnowledgeCache.cs` - מטמון ידע לשיפור ביצועים.
 
 **AI Service (Python)**:
 *   `app.py` - שרת Flask עם לוגיקת RAG והנחיות יועץ אקדמי.
-*   `.env` - ניהול מפתחות אבטחה.
+*   `requirements.txt` - תלויות השירות, כולל `gunicorn` לפריסה בענן.

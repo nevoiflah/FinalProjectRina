@@ -50,20 +50,23 @@ Our comprehensive system integrates:
 ### 2.5 System Architecture
 The system employs a Client-Server architecture with clear component separation:
 ```
-[ Browser - Client ]
-  |--> Admin Dashboard (admin.html)
-  |--> Chat Interface (index.html)
+[ Browser - React/Vite Client ]
+  |--> Admin Dashboard
+  |--> Chat Interface
         |
       HTTPS / REST
         |
 [ Main Server - C# ASP.NET Core ]
-  |-- AdminController (Stats)
+  |-- UserController
+  |-- AdminController
   |-- ChatController
+  |-- SttController / TtsController
   |-- BL: ChatService (RAG Logic)
         |
-        |---[ SQL Server ]
-        |     |-- NLA_Users
-        |     |-- NLA_ChatSessions (Training Data)
+        |---[ MongoDB Atlas ]
+        |     |-- users
+        |     |-- chatSessions
+        |     |-- knowledge
         |
       HTTP (Internal)
         |
@@ -77,7 +80,7 @@ The system employs a Client-Server architecture with clear component separation:
 ```
 
 ### 2.6 Challenges & Innovations
-1.  **RAG without Vector DB**: The challenge was to implement a memory mechanism without heavy infrastructure. **Solution**: Smart SQL search and in-memory keyword filtering in C#, enabling very fast response times at low cost.
+1.  **RAG without Heavy Infrastructure**: The challenge was to implement a memory mechanism without heavy infrastructure. **Solution**: MongoDB-backed knowledge storage, OpenAI embeddings, and cached retrieval logic in C#.
 2.  **Language Synchronization**: Managing a bilingual interface (RTL/LTR) that affects the AI's System Prompt (instructing it to answer in the correct language).
 3.  **State Management in Python**: Moving to a Python Microservice required efficient Context passing in every request (Stateless), solved by injecting history into the request body from the C# server.
 
@@ -88,13 +91,30 @@ The system employs a Client-Server architecture with clear component separation:
 ### Prerequisites
 - .NET 8.0 SDK
 - Python 3.8 or higher
-- SQL Server (LocalDB or Standard)
+- Node.js 18 or higher
+- MongoDB Atlas database
 - OpenAI API Key
 
-### Database Initialization
-1. Execute `Server/UserTable.sql` to initialize the Users table.
-2. Execute `Server/ChatSessionsTable.sql` to initialize the Chat Sessions table.
-3. Configure `ConnectionStrings:myProjDB` in `Server/appsettings.json`.
+### Required Configuration
+Do not commit real secrets. `Server/appsettings.json` is ignored by git and should be used only for local development.
+
+The .NET API expects:
+```txt
+ConnectionStrings__MongoDB
+MongoDB__DatabaseName
+OpenAI__ApiKey
+PythonService__Url
+```
+
+The Python AI service expects:
+```txt
+OPENAI_API_KEY
+```
+
+The Vite client expects this value at build time:
+```txt
+VITE_API_BASE_URL
+```
 
 ### Service Startup
 **Terminal 1: Python AI Service**
@@ -110,12 +130,159 @@ cd Server
 dotnet run
 ```
 
-### Client Access
-Open `Client/index.html`. For admin features, log in with `nevo.iflah6@gmail.com`.
+**Terminal 3: React Client**
+```bash
+cd Client
+npm install
+VITE_API_BASE_URL=http://localhost:5102 npm run dev
+```
+
+For admin features, log in with the configured admin user.
+
+### Health Checks
+```bash
+curl http://localhost:5102/health
+curl http://localhost:5001/health
+```
 
 ---
 
-## 4. API Documentation
+## 4. Azure Deployment
+
+Recommended Azure layout:
+- **Azure Static Web Apps** for `Client`
+- **Azure App Service** for the .NET API in `Server`
+- **Azure App Service Linux** for the Python service in `Server/AI_Service`
+- **MongoDB Atlas** for data storage
+
+### Create Resources
+```bash
+SUFFIX="$(date +%m%d%H%M)"
+RG="rina-final-project-rg"
+APP_LOCATION="eastus"
+SWA_LOCATION="eastus2"
+
+PLAN="rina-plan-$SUFFIX"
+API_APP="rina-api-$SUFFIX"
+AI_APP="rina-ai-$SUFFIX"
+STATIC_APP="rina-client-$SUFFIX"
+
+az group create --name "$RG" --location "$APP_LOCATION"
+
+az appservice plan create \
+  --name "$PLAN" \
+  --resource-group "$RG" \
+  --location "$APP_LOCATION" \
+  --sku B1 \
+  --is-linux
+```
+
+### Deploy Python AI Service
+```bash
+az webapp create \
+  --resource-group "$RG" \
+  --plan "$PLAN" \
+  --name "$AI_APP" \
+  --runtime "PYTHON:3.11"
+
+az webapp config appsettings set \
+  --resource-group "$RG" \
+  --name "$AI_APP" \
+  --settings OPENAI_API_KEY="$OPENAI_API_KEY" SCM_DO_BUILD_DURING_DEPLOYMENT=true
+
+az webapp config set \
+  --resource-group "$RG" \
+  --name "$AI_APP" \
+  --startup-file "gunicorn --bind=0.0.0.0:\$PORT app:app"
+
+cd Server/AI_Service
+zip -r ai-service.zip . -x "*.DS_Store" "__pycache__/*" "*.pyc"
+az webapp deploy --resource-group "$RG" --name "$AI_APP" --src-path ai-service.zip --type zip
+cd ../..
+```
+
+### Deploy .NET API
+```bash
+az webapp create \
+  --resource-group "$RG" \
+  --plan "$PLAN" \
+  --name "$API_APP" \
+  --runtime "DOTNETCORE:8.0"
+
+az webapp config appsettings set \
+  --resource-group "$RG" \
+  --name "$API_APP" \
+  --settings \
+    ConnectionStrings__MongoDB="$MONGODB_CONNECTION_STRING" \
+    MongoDB__DatabaseName="FinalProjectRina" \
+    OpenAI__ApiKey="$OPENAI_API_KEY" \
+    PythonService__Url="https://$AI_APP.azurewebsites.net" \
+    ASPNETCORE_ENVIRONMENT="Production"
+
+cd Server
+dotnet publish -c Release -o publish
+cd publish
+zip -r ../server.zip . -x "*.DS_Store"
+cd ..
+az webapp deploy --resource-group "$RG" --name "$API_APP" --src-path server.zip --type zip
+cd ..
+```
+
+### Deploy React Client
+`VITE_API_BASE_URL` must be provided during `npm run build`; setting it afterward in Azure Static Web Apps does not update the already-built JavaScript.
+
+```bash
+az staticwebapp create \
+  --name "$STATIC_APP" \
+  --resource-group "$RG" \
+  --location "$SWA_LOCATION" \
+  --sku Free
+
+cd Client
+npm install
+VITE_API_BASE_URL="https://$API_APP.azurewebsites.net" npm run build
+npm install -g @azure/static-web-apps-cli
+
+SWA_TOKEN=$(az staticwebapp secrets list \
+  --name "$STATIC_APP" \
+  --resource-group "$RG" \
+  --query "properties.apiKey" \
+  --output tsv)
+
+swa deploy ./dist --deployment-token "$SWA_TOKEN" --env production
+cd ..
+```
+
+### Verify Production
+```bash
+FRONTEND_HOST=$(az staticwebapp show --name "$STATIC_APP" --resource-group "$RG" --query defaultHostname --output tsv)
+
+echo "Frontend: https://$FRONTEND_HOST"
+echo "API:      https://$API_APP.azurewebsites.net"
+echo "AI:       https://$AI_APP.azurewebsites.net"
+
+curl "https://$API_APP.azurewebsites.net/health"
+curl "https://$AI_APP.azurewebsites.net/health"
+```
+
+### MongoDB Atlas Network Access
+Add the .NET API outbound IP addresses to MongoDB Atlas:
+```bash
+az webapp show \
+  --resource-group "$RG" \
+  --name "$API_APP" \
+  --query outboundIpAddresses \
+  --output tsv
+```
+
+Add those IPs in MongoDB Atlas under **Network Access**.
+
+### Static App Refresh Support
+`Client/public/staticwebapp.config.json` configures Azure Static Web Apps to rewrite React client-side routes to `index.html`. This prevents 404s when refreshing routes such as `/login` or `/admin`.
+
+---
+
+## 5. API Documentation
 
 ### POST /api/chat
 Initiates a chat interaction.
@@ -126,3 +293,6 @@ Initiates a chat interaction.
 Retrieves system statistics (Admin only).
 - **Query Param**: `userId` (ID of the requesting admin).
 - **Response**: Array of user objects including name, email, join date, initial question, and final result.
+
+### GET /health
+Returns API health status.

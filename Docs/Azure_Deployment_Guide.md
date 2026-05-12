@@ -1,111 +1,309 @@
 # Azure Deployment Guide for Ruppin Academic Advisor
 
-This guide outlines the steps to deploy your **C# ASP.NET Core Backend**, **Python Flask AI Microservice**, and **SQL Database** to the Microsoft Azure Cloud.
+This guide deploys the current project architecture:
+
+- React/Vite client to **Azure Static Web Apps**
+- ASP.NET Core 8 API to **Azure App Service**
+- Python Flask AI service to **Azure App Service Linux**
+- MongoDB Atlas as the production database
+- OpenAI for chat, embeddings, STT, and TTS
+
+Do not commit real secrets. Configure secrets through Azure app settings and MongoDB Atlas.
 
 ## Prerequisites
-1.  **Azure Account**: [Sign up for free](https://azure.microsoft.com/free/) (or use Azure for Students).
-2.  **Azure CLI**: Install the Azure Command Line Interface (optional but helpful).
-3.  **Visual Studio 2022**: Installed with Azure development workload.
 
----
+1. Azure for Students subscription.
+2. Azure CLI installed and logged in.
+3. Node.js 18 or newer.
+4. .NET 8 SDK.
+5. MongoDB Atlas connection string.
+6. OpenAI API key.
 
-## Step 1: Create Azure SQL Database
-Since you need a "table-oriented database", Azure SQL is the native choice.
+```bash
+az login
+az account show --output table
+```
 
-1.  Log in to the **Azure Portal**.
-2.  Search for **SQL Databases** and click **Create**.
-3.  **Resource Group**: Create a new one (e.g., `RuppinProject_RG`).
-4.  **Database Name**: e.g., `RuppinDB`.
-5.  **Server**: Click "Create new".
-    *   **Server name**: Global unique name (e.g., `ruppin-sql-server-nevo`).
-    *   **Authentication**: Use "Use SQL authentication". Set a robust Admin Login and Password. **Save these!**
-6.  **Pricing Tier**: Select "Basic" or "Standard S0" (cheapest options suitable for projects).
-7.  **Networking**:
-    *   **Firewall rules**: Select "Yes" for "Allow Azure services and resources to access this server".
-    *   Add your current client IP address to allow local connection from SSMS.
-8.  **Review + create**.
+## 1. Set Deployment Variables
 
-### Update Database Schema
-Once created:
-1.  Get the **Connection String** from the database "Overview" -> "Show database connection strings".
-2.  Open **SSMS** (SQL Server Management Studio) locally.
-3.  Connect to the new Azure Server (e.g., `ruppin-sql-server-nevo.database.windows.net`) using your admin credentials.
-4.  Run your existing `UserTable.sql` and `ChatSessionsTable.sql` scripts to create the tables in the cloud.
+Run from the repository root:
 
----
+```bash
+cd /Volumes/MEMORY/Projects/FinalProjectRina
 
-## Step 2: Deploy C# ASP.NET Core Backend
-1.  In **Visual Studio**, right-click the `Server` project -> **Publish**.
-2.  Target: **Azure**.
-3.  Specific Target: **Azure App Service (Windows)**.
-4.  **Create New**:
-    *   Name: `ruppin-backend-nevo` (must be unique).
-    *   Plan: Free (F1) or Shared (D1) if available, otherwise Basic (B1).
-5.  **Database Connection**:
-    *   Visual Studio might detect your SQL Database. If not, click "Next" and finish.
-    *   In the Publish summary screen, click "Configure" next to **Service Dependencies**.
-    *   Select "Azure SQL Database", connect to the DB you created in Step 1.
-    *   Visual Studio will update the connection string in the published app settings automatically.
-6.  **Publish**.
-7.  Once finished, your API will be live at `https://ruppin-backend-nevo.azurewebsites.net`.
+SUFFIX="$(date +%m%d%H%M)"
+RG="rina-final-project-rg"
+APP_LOCATION="eastus"
+SWA_LOCATION="eastus2"
 
----
+PLAN="rina-plan-$SUFFIX"
+API_APP="rina-api-$SUFFIX"
+AI_APP="rina-ai-$SUFFIX"
+STATIC_APP="rina-client-$SUFFIX"
 
-## Step 3: Deploy Python AI Microservice
-Deploy as a separate Web App.
+echo "Resource group: $RG"
+echo "API app:        $API_APP"
+echo "AI app:         $AI_APP"
+echo "Static app:     $STATIC_APP"
+```
 
-1.  In **Azure Portal**, create a new **Web App**.
-2.  Name: `ruppin-ai-service-nevo`.
-3.  **Publish**: Code.
-4.  **Runtime stack**: Python 3.11 (or 3.10).
-5.  **OS**: Linux.
-6.  **Plan**: Select the same region and Resource Group. Use Free (F1) or Basic (B1).
-7.  **Create**.
+Enter secrets for this terminal session:
 
-### Deploy Code (from VS Code)
-1.  Open the `Server/AI_Service` folder in VS Code.
-2.  Install "Azure App Service" extension.
-3.  Right-click the App Service you just created -> **Deploy to Web App**.
-4.  Select the `Server/AI_Service` folder.
-5.  Azure will detect `requirements.txt` and build the environment.
+```bash
+echo "Paste OpenAI API key:"
+read -s OPENAI_API_KEY
+echo
 
-### Configure Environment Variables
-1.  Go to the Python Web App in Azure Portal.
-2.  **Settings** -> **Environment variables**.
-3.  Add:
-    *   `OPENAI_API_KEY`: Your actual key (starting with `sk-proj...`).
-4.  **Save**.
+echo "Paste MongoDB Atlas connection string:"
+read -s MONGODB_CONNECTION_STRING
+echo
+```
 
----
+## 2. Create Azure Resources
 
-## Step 4: Final Configuration & Connection
-Now link the two services and the frontend.
+```bash
+az group create \
+  --name "$RG" \
+  --location "$APP_LOCATION"
 
-### 1. Update C# Backend Configuration
-The C# backend needs to know where the Python service is.
-1.  Go to your **C# App Service** in Azure Portal.
-2.  **Settings** -> **Environment variables**.
-3.  Add:
-    *   `PythonService__Url`: `https://ruppin-ai-service-nevo.azurewebsites.net` (Note the double underscore `__` for nested JSON keys in Azure).
-    
-### 2. Update Frontend Code
-The HTML/JS frontend is currently served by your C# app's `wwwroot`.
-1.  Since you are serving static files from the C# backend, you generally **do not** need to change the API URL in `script.js` if you are using relative paths (e.g., `fetch('/api/chat')`).
-2.  **Check your `client/script.js`**:
-    *   If you have `const API_BASE_URL = "http://localhost:5117";`, change it to your Azure URL: `const API_BASE_URL = "";` (empty string implies relative path) OR `"https://ruppin-backend-nevo.azurewebsites.net"`.
-    *   **Recommendation**: Use relative paths (`/api/...`) so it works both locally and in prod suitable for serving from `wwwroot`.
+az appservice plan create \
+  --name "$PLAN" \
+  --resource-group "$RG" \
+  --location "$APP_LOCATION" \
+  --sku B1 \
+  --is-linux
+```
 
-### 3. Re-Publish C# Logic
-If you changed `script.js`, Re-Publish the C# project so the new `wwwroot` files go to the cloud.
+`B1` uses Azure student credits. It is more reliable for this multi-service setup than free-tier hosting.
 
----
+## 3. Deploy Python AI Service
 
-## Step 5: Verification
-1.  Open `https://ruppin-backend-nevo.azurewebsites.net`.
-2.  The login page should load.
-3.  Create a user (this tests the SQL Database connection).
-4.  Log in and try the chat (this tests the Python connection).
+```bash
+az webapp create \
+  --resource-group "$RG" \
+  --plan "$PLAN" \
+  --name "$AI_APP" \
+  --runtime "PYTHON:3.11"
 
-## Troubleshooting
-*   **500 Errors**: Check "Log Stream" in Azure Portal for the specific App Service.
-*   **CORS Errors**: In C# App Service -> **Settings** -> **CORS**. Add `*` (or your specific domain) to allowed origins.
+az webapp config appsettings set \
+  --resource-group "$RG" \
+  --name "$AI_APP" \
+  --settings OPENAI_API_KEY="$OPENAI_API_KEY" SCM_DO_BUILD_DURING_DEPLOYMENT=true
+
+az webapp config set \
+  --resource-group "$RG" \
+  --name "$AI_APP" \
+  --startup-file "gunicorn --bind=0.0.0.0:\$PORT app:app"
+
+cd Server/AI_Service
+zip -r ai-service.zip . -x "*.DS_Store" "__pycache__/*" "*.pyc"
+
+az webapp deploy \
+  --resource-group "$RG" \
+  --name "$AI_APP" \
+  --src-path ai-service.zip \
+  --type zip
+
+cd ../..
+```
+
+Verify:
+
+```bash
+curl "https://$AI_APP.azurewebsites.net/health"
+```
+
+Expected response includes:
+
+```json
+{"status":"healthy","openaiConfigured":true}
+```
+
+## 4. Deploy ASP.NET Core API
+
+```bash
+az webapp create \
+  --resource-group "$RG" \
+  --plan "$PLAN" \
+  --name "$API_APP" \
+  --runtime "DOTNETCORE:8.0"
+
+az webapp config appsettings set \
+  --resource-group "$RG" \
+  --name "$API_APP" \
+  --settings \
+    ConnectionStrings__MongoDB="$MONGODB_CONNECTION_STRING" \
+    MongoDB__DatabaseName="FinalProjectRina" \
+    OpenAI__ApiKey="$OPENAI_API_KEY" \
+    PythonService__Url="https://$AI_APP.azurewebsites.net" \
+    ASPNETCORE_ENVIRONMENT="Production"
+
+cd Server
+dotnet publish -c Release -o publish
+cd publish
+zip -r ../server.zip . -x "*.DS_Store"
+cd ..
+
+az webapp deploy \
+  --resource-group "$RG" \
+  --name "$API_APP" \
+  --src-path server.zip \
+  --type zip
+
+cd ..
+```
+
+Verify:
+
+```bash
+curl "https://$API_APP.azurewebsites.net/health"
+curl "https://$API_APP.azurewebsites.net/api/user"
+```
+
+## 5. Configure MongoDB Atlas Network Access
+
+Get the outbound IP addresses for the API app:
+
+```bash
+az webapp show \
+  --resource-group "$RG" \
+  --name "$API_APP" \
+  --query outboundIpAddresses \
+  --output tsv
+```
+
+In MongoDB Atlas:
+
+1. Open **Network Access**.
+2. Add the Azure outbound IP addresses.
+3. Confirm the database user in the connection string has read/write permissions.
+
+For a short demo only, `0.0.0.0/0` can be used temporarily, but it should not remain open for production.
+
+## 6. Deploy React/Vite Client
+
+`VITE_API_BASE_URL` must be set during the build. Azure Static Web Apps app settings do not rewrite an already-built Vite bundle.
+
+```bash
+az staticwebapp create \
+  --name "$STATIC_APP" \
+  --resource-group "$RG" \
+  --location "$SWA_LOCATION" \
+  --sku Free
+
+cd Client
+npm install
+VITE_API_BASE_URL="https://$API_APP.azurewebsites.net" npm run build
+npm install -g @azure/static-web-apps-cli
+
+SWA_TOKEN=$(az staticwebapp secrets list \
+  --name "$STATIC_APP" \
+  --resource-group "$RG" \
+  --query "properties.apiKey" \
+  --output tsv)
+
+swa deploy ./dist \
+  --deployment-token "$SWA_TOKEN" \
+  --env production
+
+cd ..
+```
+
+Verify that the API URL was compiled into the bundle:
+
+```bash
+grep -R "https://$API_APP.azurewebsites.net" Client/dist/assets
+```
+
+## 7. Verify The Live System
+
+```bash
+FRONTEND_HOST=$(az staticwebapp show \
+  --name "$STATIC_APP" \
+  --resource-group "$RG" \
+  --query defaultHostname \
+  --output tsv)
+
+echo "Frontend: https://$FRONTEND_HOST"
+echo "API:      https://$API_APP.azurewebsites.net"
+echo "AI:       https://$AI_APP.azurewebsites.net"
+```
+
+Manual checks:
+
+1. Open the frontend URL.
+2. Refresh `/login`, `/admin`, and `/` to confirm client-side routing works.
+3. Log in or register a user.
+4. Send a chat message.
+5. Test TTS and STT from the chat screen.
+6. Open the admin dashboard with an admin user.
+
+## 8. Troubleshooting
+
+### Refresh Returns 404
+
+Confirm `Client/public/staticwebapp.config.json` exists and was copied into `Client/dist`:
+
+```bash
+cat Client/dist/staticwebapp.config.json
+```
+
+Redeploy the frontend after rebuilding.
+
+### Login Returns 405
+
+The frontend was probably built without `VITE_API_BASE_URL`, so requests are going to the Static Web App instead of the API.
+
+Rebuild and redeploy:
+
+```bash
+cd Client
+VITE_API_BASE_URL="https://$API_APP.azurewebsites.net" npm run build
+swa deploy ./dist --deployment-token "$SWA_TOKEN" --env production
+cd ..
+```
+
+### API Cannot Reach MongoDB
+
+Check MongoDB Atlas network access and the Azure app setting:
+
+```bash
+az webapp config appsettings list \
+  --resource-group "$RG" \
+  --name "$API_APP" \
+  --query "[?name=='ConnectionStrings__MongoDB' || name=='MongoDB__DatabaseName']"
+```
+
+### API Cannot Reach Python Service
+
+Check the configured Python service URL:
+
+```bash
+az webapp config appsettings list \
+  --resource-group "$RG" \
+  --name "$API_APP" \
+  --query "[?name=='PythonService__Url']"
+```
+
+Then verify the Python service:
+
+```bash
+curl "https://$AI_APP.azurewebsites.net/health"
+```
+
+### View Logs
+
+```bash
+az webapp log tail --resource-group "$RG" --name "$API_APP"
+az webapp log tail --resource-group "$RG" --name "$AI_APP"
+```
+
+## 9. Domain Setup
+
+After the Azure URLs work:
+
+- Point `www.yourdomain.com` to Azure Static Web Apps.
+- Point `api.yourdomain.com` to the API App Service.
+- Keep the Python AI service private by convention; the API can call its Azure URL directly.
+
+Configure custom domains from each Azure resource's **Custom domains** page and follow the DNS records Azure provides.

@@ -1,8 +1,20 @@
-# React + Vite
+# Ruppin Academic Advisor Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite frontend for the Ruppin Academic Advisor system.
 
-Currently, two official plugins are available:
+## Local Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm install
+VITE_API_BASE_URL=http://localhost:5102 npm run dev
+```
+
+## Production Build
+
+`VITE_API_BASE_URL` is compiled into the static JavaScript bundle, so it must be set when building:
+
+```bash
+VITE_API_BASE_URL=https://YOUR_API_APP.azurewebsites.net npm run build
+```
+
+The Azure Static Web Apps routing fallback lives in `public/staticwebapp.config.json`; it is copied into `dist` during `npm run build` and allows routes such as `/login` and `/admin` to work after refresh.
