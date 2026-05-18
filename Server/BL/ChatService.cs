@@ -56,7 +56,7 @@ public class ChatService : IChatService
     private readonly IMongoCollection<ChatSession> _sessions;
     private readonly KnowledgeCache _knowledgeCache;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _openAiApiKey;
+    private readonly string _pythonServiceUrl;
 
     public ChatService(IAiProvider aiProvider, IMongoDatabase database, KnowledgeCache knowledgeCache, IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
@@ -64,7 +64,7 @@ public class ChatService : IChatService
         _sessions = database.GetCollection<ChatSession>("chatSessions");
         _knowledgeCache = knowledgeCache;
         _httpClientFactory = httpClientFactory;
-        _openAiApiKey = configuration["OpenAI:ApiKey"] ?? "";
+        _pythonServiceUrl = configuration["PythonService:Url"] ?? "http://localhost:5001";
     }
 
     public async Task<string> GenerateReplyAsync(string? message, string? userId)
@@ -145,17 +145,14 @@ public class ChatService : IChatService
     private async Task<float[]> GetEmbeddingAsync(string text)
     {
         var http = _httpClientFactory.CreateClient();
-        http.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _openAiApiKey);
-
         var response = await http.PostAsJsonAsync(
-            "https://api.openai.com/v1/embeddings",
-            new { model = "text-embedding-3-small", input = text });
+            $"{_pythonServiceUrl}/embed",
+            new { texts = new[] { text } });
 
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<EmbeddingResponse>();
-        return result!.Data[0].Embedding;
+        var result = await response.Content.ReadFromJsonAsync<EmbedResponse>();
+        return result!.Embeddings[0];
     }
 
     private static float CosineSimilarity(float[] a, float[] b)
@@ -170,12 +167,8 @@ public class ChatService : IChatService
         return dot / (MathF.Sqrt(magA) * MathF.Sqrt(magB));
     }
 
-    private record EmbeddingResponse(
-        [property: JsonPropertyName("data")] EmbeddingItem[] Data);
-
-    private record EmbeddingItem(
-        [property: JsonPropertyName("index")] int Index,
-        [property: JsonPropertyName("embedding")] float[] Embedding);
+    private record EmbedResponse(
+        [property: JsonPropertyName("embeddings")] float[][] Embeddings);
 
     private async Task LogChatInteraction(string userId, string userMessage, string botReply)
     {

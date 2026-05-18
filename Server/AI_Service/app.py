@@ -4,6 +4,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from openai import OpenAI
+from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 
@@ -18,6 +19,11 @@ app = Flask(__name__)
 CORS(app)
 
 client = OpenAI(api_key=api_key)
+
+# Load multilingual embedding model at startup (supports Hebrew + Arabic)
+logger.info("Loading sentence-transformers embedding model...")
+embed_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+logger.info("Embedding model ready.")
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -83,6 +89,19 @@ Your goal is to help students choose a degree based on their grades, interests, 
     except Exception as e:
         logger.error("Chat error: %s", e)
         return jsonify({"error": str(e)}), 500
+
+@app.route('/embed', methods=['POST'])
+def embed():
+    data = request.json
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    texts = data.get('texts')
+    if not texts or not isinstance(texts, list):
+        return jsonify({"error": "texts array is required"}), 400
+
+    embeddings = embed_model.encode(texts).tolist()
+    return jsonify({"embeddings": embeddings})
 
 @app.route('/health', methods=['GET'])
 def health():

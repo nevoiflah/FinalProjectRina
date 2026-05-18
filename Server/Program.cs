@@ -43,7 +43,7 @@ using (var scope = app.Services.CreateScope())
     var userService = scope.ServiceProvider.GetRequiredService<IUserService>() as UserService;
     try
     {
-        await KnowledgeSeeder.SeedAsync(db, app.Configuration["OpenAI:ApiKey"] ?? "");
+        await KnowledgeSeeder.SeedAsync(db, app.Configuration["PythonService:Url"] ?? "http://localhost:5001");
         userService?.PromoteUserToAdmin("nevo.iflah6@gmail.com");
     }
     catch (Exception ex)

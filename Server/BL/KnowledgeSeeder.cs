@@ -6,56 +6,69 @@ namespace FinalProjectRina.Server.BL;
 
 public static class KnowledgeSeeder
 {
-    public static async Task SeedAsync(IMongoDatabase db, string apiKey, bool force = false)
+    // sentence-transformers 'paraphrase-multilingual-MiniLM-L12-v2' produces 384-dim vectors
+    private const int ExpectedEmbeddingDim = 384;
+
+    public static async Task SeedAsync(IMongoDatabase db, string pythonServiceUrl, bool force = false)
     {
         var col = db.GetCollection<KnowledgeFact>("ruppinKnowledge");
 
-        if (!force && col.CountDocuments(Builders<KnowledgeFact>.Filter.Empty) > 0) return;
+        // Auto-detect stale embeddings: if existing facts use a different dimension
+        // (e.g. 1536 from the old OpenAI embeddings), force a re-seed
+        if (!force && col.CountDocuments(Builders<KnowledgeFact>.Filter.Empty) > 0)
+        {
+            var sample = col.Find(Builders<KnowledgeFact>.Filter.Ne<float[]>("embedding", null!))
+                            .FirstOrDefault();
+            if (sample?.Embedding != null && sample.Embedding.Length != ExpectedEmbeddingDim)
+            {
+                Console.WriteLine($"Embedding dimension mismatch ({sample.Embedding.Length} vs {ExpectedEmbeddingDim}). Re-seeding knowledge base.");
+                force = true;
+            }
+            else if (sample?.Embedding != null)
+            {
+                return; // already seeded with correct embeddings
+            }
+        }
 
         var facts = GetFacts();
 
-        if (!string.IsNullOrEmpty(apiKey))
+        if (!string.IsNullOrEmpty(pythonServiceUrl))
         {
             try
             {
                 using var http = new HttpClient();
-                http.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                http.Timeout = TimeSpan.FromSeconds(120);
 
                 var texts = facts.Select(f => f.FactText).ToList();
                 var response = await http.PostAsJsonAsync(
-                    "https://api.openai.com/v1/embeddings",
-                    new { model = "text-embedding-3-small", input = texts });
+                    $"{pythonServiceUrl}/embed",
+                    new { texts });
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<EmbeddingBatchResponse>();
-                    if (result?.Data != null)
-                        foreach (var d in result.Data)
-                            facts[d.Index].Embedding = d.Embedding;
+                    var result = await response.Content.ReadFromJsonAsync<EmbedResponse>();
+                    if (result?.Embeddings != null)
+                        for (int i = 0; i < result.Embeddings.Length && i < facts.Count; i++)
+                            facts[i].Embedding = result.Embeddings[i];
                 }
                 else
                 {
-                    Console.WriteLine($"Warning: OpenAI embeddings API returned {response.StatusCode}. Seeding without embeddings.");
+                    Console.WriteLine($"Warning: Python /embed returned {response.StatusCode}. Seeding without embeddings.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Warning: Could not generate embeddings for knowledge base: {ex.Message}. Falling back to keyword search.");
+                Console.WriteLine($"Warning: Could not generate embeddings: {ex.Message}. Falling back to keyword search.");
             }
         }
 
         if (force) col.DeleteMany(Builders<KnowledgeFact>.Filter.Empty);
         col.InsertMany(facts);
-        Console.WriteLine($"Knowledge base seeded with {facts.Count} facts{(facts[0].Embedding != null ? " + embeddings" : " (no embeddings)")}.");
+        Console.WriteLine($"Knowledge base seeded with {facts.Count} facts{(facts[0].Embedding != null ? $" + {ExpectedEmbeddingDim}-dim embeddings (sentence-transformers)" : " (no embeddings)")}.");
     }
 
-    private record EmbeddingBatchResponse(
-        [property: JsonPropertyName("data")] EmbeddingItem[] Data);
-
-    private record EmbeddingItem(
-        [property: JsonPropertyName("index")] int Index,
-        [property: JsonPropertyName("embedding")] float[] Embedding);
+    private record EmbedResponse(
+        [property: JsonPropertyName("embeddings")] float[][] Embeddings);
 
     private static List<KnowledgeFact> GetFacts() => new()
     {
