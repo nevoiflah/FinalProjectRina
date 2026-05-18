@@ -1,14 +1,22 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
+import logging
 from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
 
-app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Initialize OpenAI client
 api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY environment variable is not set")
+
+app = Flask(__name__)
+CORS(app)
+
 client = OpenAI(api_key=api_key)
 
 @app.route('/chat', methods=['POST'])
@@ -73,7 +81,7 @@ Your goal is to help students choose a degree based on their grades, interests, 
         return jsonify({"reply": reply})
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.error("Chat error: %s", e)
         return jsonify({"error": str(e)}), 500
 
 @app.route('/health', methods=['GET'])

@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const LanguageContext = createContext();
 
-export const translations = {
+const translations = {
     he: {
         appTitle: 'היועץ האקדמי של רופין',
         appSubtitle: 'התחבר לחשבון הסטודנט שלך',

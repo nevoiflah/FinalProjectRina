@@ -8,7 +8,6 @@ const Chat = () => {
     const [messages, setMessages] = useState([]);
     const [inputVal, setInputVal] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isSpeaking, setIsSpeaking] = useState(false);
     const [autoPlayVoice, setAutoPlayVoice] = useState(true);
     const [inputError, setInputError] = useState('');
     const [recording, setRecording] = useState(false);
@@ -80,9 +79,7 @@ const Chat = () => {
                     setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
                     setLoading(false);
 
-                    setIsSpeaking(true);
                     audio.onended = () => {
-                        setIsSpeaking(false);
                         URL.revokeObjectURL(audioUrl);
                     };
 
@@ -97,7 +94,6 @@ const Chat = () => {
                 // Fallback: show text even if audio fails
                 setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
                 setLoading(false);
-                setIsSpeaking(false);
             }
 
         } catch {
