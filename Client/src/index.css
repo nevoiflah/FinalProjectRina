@@ -1,3 +1,16 @@
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Ruppin Design System */
 :root {
   --primary-blue: #1d5a8b;
@@ -85,14 +98,48 @@ body {
   gap: 16px;
 }
 
+/* Input wrapper for password toggle */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  line-height: 0;
+  border-radius: 4px;
+  transition: color var(--transition);
+}
+
+.password-toggle-btn:hover { color: var(--primary-blue); }
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
 .input-field {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid #cbd5e0;
   border-radius: var(--radius);
-  font-size: 15px;
+  font-size: 16px;
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input-field.has-toggle {
+  padding-right: 44px;
 }
 
 .input-field:focus {
@@ -110,6 +157,11 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: background-color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+}
+
+.primary-btn:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 3px;
 }
 
 .primary-btn:hover {
@@ -228,6 +280,7 @@ body {
   line-height: 1.5;
   box-shadow: var(--shadow);
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .message.user .message-content {
@@ -264,7 +317,7 @@ body {
   padding: 14px 20px;
   border: 1px solid #cbd5e0;
   border-radius: 24px;
-  font-size: 15px;
+  font-size: 16px;
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -293,6 +346,11 @@ body {
 .icon-btn:hover {
   background: var(--primary-green);
   transform: scale(1.05);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 /* Tooltip — appears above input-row buttons */
@@ -375,7 +433,10 @@ body {
 }
 
 .error-text {
-  color: #e53e3e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #c53030;
   font-size: 13px;
   margin-top: 8px;
 }
@@ -602,7 +663,7 @@ body {
   .auth-card {
     max-width: none;
     margin: auto 16px;
-    padding: 28px 22px;
+    padding: 64px 22px 28px;
   }
 
   .chat-container {
@@ -639,9 +700,9 @@ body {
   }
 
   .icon-btn {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
   }
 
   .chat-input {

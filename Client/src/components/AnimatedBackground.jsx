@@ -168,12 +168,22 @@ const AnimatedBackground = () => {
             }
         };
 
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                cancelAnimationFrame(animationFrameId);
+            } else if (!reducedMotionQuery.matches) {
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        };
+
         window.addEventListener('resize', resize);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
         resize();
         animate();
 
         return () => {
             window.removeEventListener('resize', resize);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
@@ -181,6 +191,7 @@ const AnimatedBackground = () => {
     return (
         <canvas
             ref={canvasRef}
+            aria-hidden="true"
             style={{
                 position: 'fixed',
                 top: 0,
@@ -189,7 +200,7 @@ const AnimatedBackground = () => {
                 height: '100%',
                 zIndex: 0,
                 pointerEvents: 'none',
-                opacity: 0.9
+                opacity: 1
             }}
         />
     );

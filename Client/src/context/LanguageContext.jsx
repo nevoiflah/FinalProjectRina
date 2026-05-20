@@ -34,6 +34,8 @@ const translations = {
         noHistory: 'לא נמצאה היסטוריית שיחות.',
         inputError: 'נא להשתמש בעברית או ערבית בלבד.',
         aiPrompt: 'ענה בבקשה בעברית בלבד.',
+        showPassword: 'הצג סיסמה',
+        hidePassword: 'הסתר סיסמה',
     },
     ar: {
         appTitle: 'مساعد روبين الأكاديمي',
@@ -66,6 +68,8 @@ const translations = {
         noHistory: 'لم يتم العثور على سجل محادثات.',
         inputError: 'الرجاء استخدام العربية أو العبرية فقط.',
         aiPrompt: 'أجب باللغة العربية فقط.',
+        showPassword: 'إظهار كلمة المرور',
+        hidePassword: 'إخفاء كلمة المرور',
     }
 };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Send, LogOut, LayoutDashboard, Globe, Volume2, VolumeX } from 'lucide-react';
+import { Mic, Send, LogOut, LayoutDashboard, Globe, Volume2, VolumeX, AlertCircle } from 'lucide-react';
 import { sendChatMessage, getSttTranscript, getTtsAudio, endSession } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -206,11 +206,11 @@ const Chat = () => {
                     </div>
                     <div className="header-actions">
                         {isAdmin && (
-                            <button className="icon-btn header-icon-btn" onClick={() => navigate('/admin')} data-tooltip={t('adminDashboard')}>
+                            <button className="icon-btn header-icon-btn" onClick={() => navigate('/admin')} data-tooltip={t('adminDashboard')} aria-label={t('adminDashboard')}>
                                 <LayoutDashboard size={20} />
                             </button>
                         )}
-                        <button className="icon-btn header-icon-btn" onClick={handleLogout} data-tooltip={t('logout')}>
+                        <button className="icon-btn header-icon-btn" onClick={handleLogout} data-tooltip={t('logout')} aria-label={t('logout')}>
                             <LogOut size={20} />
                         </button>
                     </div>
@@ -219,7 +219,7 @@ const Chat = () => {
                 <div className="chat-messages">
                     {messages.map((m, idx) => (
                         <div key={idx} className={`message ${m.sender}`}>
-                            <div className="message-content" dangerouslySetInnerHTML={{ __html: m.text }} />
+                            <div className="message-content">{m.text}</div>
                         </div>
                     ))}
                     {loading && (
@@ -243,7 +243,12 @@ const Chat = () => {
                             {t('transcribing')}
                         </div>
                     ) : (
-                        inputError && <div className="error-text input-error-centered">{inputError}</div>
+                        inputError && (
+                            <div className="error-text input-error-centered" role="alert">
+                                <AlertCircle size={14} aria-hidden="true" />
+                                {inputError}
+                            </div>
+                        )
                     )}
 
                     <div className="chat-input-row">
@@ -251,6 +256,8 @@ const Chat = () => {
                             className={`icon-btn ${autoPlayVoice ? '' : 'voice-toggle-off'}`}
                             onClick={() => setAutoPlayVoice(!autoPlayVoice)}
                             data-tooltip={autoPlayVoice ? t('voiceOn') : t('voiceOff')}
+                            aria-label={autoPlayVoice ? t('voiceOn') : t('voiceOff')}
+                            aria-pressed={autoPlayVoice}
                         >
                             {autoPlayVoice ? <Volume2 size={20} /> : <VolumeX size={20} />}
                         </button>
@@ -258,6 +265,8 @@ const Chat = () => {
                             className={`icon-btn ${recording ? 'recording-btn' : ''}`}
                             onClick={toggleRecording}
                             data-tooltip={recording ? t('stopRecording') : t('startRecording')}
+                            aria-label={recording ? t('stopRecording') : t('startRecording')}
+                            aria-pressed={recording}
                         >
                             {recording ? (
                                 <div className="equalizer">
@@ -282,7 +291,7 @@ const Chat = () => {
                             }}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         />
-                        <button className="icon-btn" onClick={handleSend} disabled={loading || transcribing} data-tooltip={t('sendMessage')}>
+                        <button className="icon-btn" onClick={handleSend} disabled={loading || transcribing} data-tooltip={t('sendMessage')} aria-label={t('sendMessage')}>
                             <Send size={20} />
                         </button>
                     </div>
