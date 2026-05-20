@@ -4,12 +4,17 @@ import os
 import logging
 from dotenv import load_dotenv
 from openai import OpenAI
-from sentence_transformers import SentenceTransformer
 
 load_dotenv()
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+try:
+    from sentence_transformers import SentenceTransformer
+    _sentence_transformers_available = True
+except ImportError:
+    _sentence_transformers_available = False
+    logger.warning("sentence-transformers not installed — /embed will return 503. RAG falls back to keyword search.")
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
@@ -20,10 +25,18 @@ CORS(app)
 
 client = OpenAI(api_key=api_key)
 
-# Load multilingual embedding model at startup (supports Hebrew + Arabic)
-logger.info("Loading sentence-transformers embedding model...")
-embed_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-logger.info("Embedding model ready.")
+# Model is loaded lazily on first /embed request to avoid blocking gunicorn startup
+_embed_model = None
+
+def get_embed_model():
+    global _embed_model
+    if not _sentence_transformers_available:
+        return None
+    if _embed_model is None:
+        logger.info("Loading sentence-transformers embedding model...")
+        _embed_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+        logger.info("Embedding model ready.")
+    return _embed_model
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -100,7 +113,10 @@ def embed():
     if not texts or not isinstance(texts, list):
         return jsonify({"error": "texts array is required"}), 400
 
-    embeddings = embed_model.encode(texts).tolist()
+    model = get_embed_model()
+    if model is None:
+        return jsonify({"error": "sentence-transformers not installed on this instance"}), 503
+    embeddings = model.encode(texts).tolist()
     return jsonify({"embeddings": embeddings})
 
 @app.route('/health', methods=['GET'])

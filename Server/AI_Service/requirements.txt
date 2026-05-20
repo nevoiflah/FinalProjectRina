@@ -3,4 +3,3 @@ flask-cors
 openai
 python-dotenv
 gunicorn
-sentence-transformers
