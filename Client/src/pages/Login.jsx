@@ -26,7 +26,7 @@ const Login = () => {
             setLoading(true);
             const user = await loginUser(email, password);
             localStorage.setItem('chatUser', JSON.stringify(user));
-            navigate('/');
+            navigate('/chat');
         } catch (err) {
             setError(err.response?.data?.error || err.message || 'Login failed.');
         } finally {

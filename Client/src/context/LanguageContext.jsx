@@ -36,6 +36,16 @@ const translations = {
         aiPrompt: 'ענה בבקשה בעברית בלבד.',
         showPassword: 'הצג סיסמה',
         hidePassword: 'הסתר סיסמה',
+        landingHero: 'הייעוץ האקדמי שלך, תמיד זמין',
+        landingSubtitle: 'שאל על תוכניות לימוד, מלגות ולוחות זמנים – בעברית או ערבית',
+        loginBtn: 'כניסה',
+        registerBtn: 'הרשמה',
+        feature1Title: 'שאל בקול',
+        feature1Desc: 'הקלט את שאלתך ישירות',
+        feature2Title: 'תשובות חכמות',
+        feature2Desc: 'מענה מיידי מבוסס בינה מלאכותית',
+        feature3Title: 'עברית וערבית',
+        feature3Desc: 'שירות מלא בשתי השפות',
     },
     ar: {
         appTitle: 'مساعد روبين الأكاديمي',
@@ -70,6 +80,16 @@ const translations = {
         aiPrompt: 'أجب باللغة العربية فقط.',
         showPassword: 'إظهار كلمة المرور',
         hidePassword: 'إخفاء كلمة المرور',
+        landingHero: 'مستشارك الأكاديمي، متاح دائماً',
+        landingSubtitle: 'اسأل عن البرامج الدراسية والمنح والجداول – بالعربية أو العبرية',
+        loginBtn: 'دخول',
+        registerBtn: 'إنشاء حساب',
+        feature1Title: 'تحدث بصوتك',
+        feature1Desc: 'سجّل سؤالك مباشرة',
+        feature2Title: 'إجابات ذكية',
+        feature2Desc: 'ردود فورية بالذكاء الاصطناعي',
+        feature3Title: 'عربي وعبري',
+        feature3Desc: 'خدمة متكاملة بكلتا اللغتين',
     }
 };
 

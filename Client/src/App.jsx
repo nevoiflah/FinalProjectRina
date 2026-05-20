@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Chat from './pages/Chat';
 import Admin from './pages/Admin';
+import Landing from './pages/Landing';
 import { LanguageProvider } from './context/LanguageContext';
 import AnimatedBackground from './components/AnimatedBackground';
 
@@ -23,10 +24,11 @@ function App() {
       <AnimatedBackground />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
-            path="/"
+            path="/chat"
             element={
               <PrivateRoute>
                 <Chat />
