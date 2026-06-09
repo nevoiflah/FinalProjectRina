@@ -32,7 +32,13 @@ public class ChatController : ControllerBase
 
         try
         {
-            var reply = await _chatService.GenerateReplyAsync(request.Message, request.UserId);
+            var history = (request.History ?? new List<ChatTurnDto>())
+                .Where(t => !string.IsNullOrWhiteSpace(t.Role) && !string.IsNullOrWhiteSpace(t.Content))
+                .Select(t => new FinalProjectRina.Server.DAL.ChatTurn(t.Role!, t.Content!))
+                .ToList();
+
+            var reply = await _chatService.GenerateReplyAsync(
+                request.Message, request.UserId, history, request.Language);
             return Ok(new { reply });
         }
         catch (ArgumentException ex)
@@ -53,4 +59,11 @@ public class ChatController : ControllerBase
     }
 }
 
-public record ChatRequest(string? Message, string? UserId);
+/// <summary>One prior conversation turn sent by the client. Role is "user" or "assistant".</summary>
+public record ChatTurnDto(string? Role, string? Content);
+
+public record ChatRequest(
+    string? Message,
+    string? UserId,
+    List<ChatTurnDto>? History = null,
+    string? Language = null);
