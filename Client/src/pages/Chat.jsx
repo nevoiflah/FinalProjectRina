@@ -64,9 +64,15 @@ const Chat = () => {
         setLoading(true);
 
         try {
-            // Secretly append the language instruction to force the AI's response language.
-            const textWithLangPrompt = `${text}\n\n[SYSTEM INSTRUCTION: ${t('aiPrompt')}]`;
-            const response = await sendChatMessage(textWithLangPrompt, userId);
+            // Pass the prior conversation so the AI actually remembers it. `messages`
+            // here is the conversation BEFORE this new turn (state updates are async),
+            // which is exactly the history we want. The language directive is sent as a
+            // separate field so the stored/visible message text stays clean.
+            const history = messages.map(m => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.text,
+            }));
+            const response = await sendChatMessage(text, userId, history, t('aiPrompt'));
 
             try {
                 if (autoPlayVoice) {
