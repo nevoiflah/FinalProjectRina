@@ -22,11 +22,27 @@ public class ChatSession
     [BsonElement("finalResult")]
     public string? FinalResult { get; set; }
 
+    [BsonElement("messages")]
+    public List<ChatMessage> Messages { get; set; } = new();
+
     [BsonElement("startedAt")]
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
 
     [BsonElement("endedAt")]
     public DateTime? EndedAt { get; set; }
+}
+
+/// <summary>A persisted conversation turn. Role is "user" or "assistant".</summary>
+public class ChatMessage
+{
+    [BsonElement("role")]
+    public string Role { get; set; } = string.Empty;
+
+    [BsonElement("content")]
+    public string Content { get; set; } = string.Empty;
+
+    [BsonElement("at")]
+    public DateTime At { get; set; } = DateTime.UtcNow;
 }
 
 public class KnowledgeFact
@@ -46,7 +62,7 @@ public class KnowledgeFact
 
 public interface IChatService
 {
-    Task<string> GenerateReplyAsync(string? message, string? userId);
+    Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null);
     Task EndSessionAsync(string userId);
 }
 
@@ -67,14 +83,14 @@ public class ChatService : IChatService
         _pythonServiceUrl = configuration["PythonService:Url"] ?? "http://localhost:5001";
     }
 
-    public async Task<string> GenerateReplyAsync(string? message, string? userId)
+    public async Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null)
     {
         if (string.IsNullOrWhiteSpace(message)) throw new ArgumentException("Message is required", nameof(message));
         if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException("User ID is required", nameof(userId));
 
         var context = await RetrieveContextAsync(message.Trim());
-        var reply = await _aiProvider.GenerateChatReplyAsync(message.Trim(), context);
-        await LogChatInteraction(userId, message, reply);
+        var reply = await _aiProvider.GenerateChatReplyAsync(message.Trim(), context, history, language);
+        await LogChatInteraction(userId, message.Trim(), reply);
         return reply;
     }
 
@@ -87,15 +103,9 @@ public class ChatService : IChatService
                                .Select(w => w.ToLower())
                                .ToList();
 
-            // Run embedding call and history fetch in parallel
+            // Run embedding call (facts come from the in-memory cache, no DB round-trip).
             var embeddingTask = GetEmbeddingAsync(query);
-            var historyTask = _sessions
-                .Find(s => s.FinalResult != null)
-                .SortByDescending(s => s.StartedAt)
-                .Limit(100)
-                .ToListAsync();
-
-            await Task.WhenAll(embeddingTask, historyTask);
+            await embeddingTask;
 
             // Facts come from in-memory cache — no DB round-trip
             var allFacts = await _knowledgeCache.GetFactsAsync();
@@ -124,16 +134,10 @@ public class ChatService : IChatService
                     .ToList();
             }
 
-            var bestHistoryMatches = historyTask.Result
-                .Select(s => new { s.FinalResult, Score = keywords.Count(k => (s.InitialQuestion ?? "").ToLower().Contains(k)) })
-                .Where(x => x.Score > 0)
-                .OrderByDescending(x => x.Score)
-                .Take(2)
-                .Select(x => x.FinalResult!)
-                .ToList();
-
-            bestHistoryMatches.AddRange(bestFactMatches);
-            return bestHistoryMatches;
+            // NOTE: We intentionally do NOT inject other users' past final answers into
+            // the prompt. The live conversation history (passed separately) is the source
+            // of memory; mixing in unrelated past sessions hurt consistency and accuracy.
+            return bestFactMatches;
         }
         catch (Exception ex)
         {
@@ -172,6 +176,13 @@ public class ChatService : IChatService
 
     private async Task LogChatInteraction(string userId, string userMessage, string botReply)
     {
+        var now = DateTime.UtcNow;
+        var newTurns = new[]
+        {
+            new ChatMessage { Role = "user", Content = userMessage, At = now },
+            new ChatMessage { Role = "assistant", Content = botReply, At = now }
+        };
+
         var activeSession = await _sessions
             .Find(s => s.UserId == userId && s.EndedAt == null)
             .SortByDescending(s => s.StartedAt)
@@ -179,9 +190,12 @@ public class ChatService : IChatService
 
         if (activeSession != null)
         {
+            // Keep legacy FinalResult for the Admin dashboard, and append the full turns.
             await _sessions.UpdateOneAsync(
                 s => s.Id == activeSession.Id,
-                Builders<ChatSession>.Update.Set(s => s.FinalResult, botReply));
+                Builders<ChatSession>.Update
+                    .Set(s => s.FinalResult, botReply)
+                    .PushEach(s => s.Messages, newTurns));
         }
         else
         {
@@ -190,7 +204,8 @@ public class ChatService : IChatService
                 UserId = userId,
                 InitialQuestion = userMessage,
                 FinalResult = botReply,
-                StartedAt = DateTime.UtcNow
+                Messages = newTurns.ToList(),
+                StartedAt = now
             });
         }
     }
