@@ -23,8 +23,8 @@ export const registerUser = async (userData) => {
   return response.data;
 };
 
-export const sendChatMessage = async (message, userId) => {
-  const response = await api.post('/api/chat', { message, userId });
+export const sendChatMessage = async (message, userId, history = [], language) => {
+  const response = await api.post('/api/chat', { message, userId, history, language });
   return response.data;
 };
 
