@@ -31,7 +31,9 @@ public class PythonAiProvider : IAiProvider
         var requestBody = new
         {
             message = prompt,
-            model = "gpt-3.5-turbo",
+            // gpt-4o-mini follows the structured advisor prompt far better than gpt-3.5-turbo
+            // and has much stronger multi-turn memory in Hebrew/Arabic, at a low cost.
+            model = "gpt-4o-mini",
             context = context ?? new List<string>(),
             history = (history ?? new List<ChatTurn>())
                 .Select(t => new { role = t.Role, content = t.Content })
