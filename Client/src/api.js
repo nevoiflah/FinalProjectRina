@@ -40,8 +40,9 @@ export const getTtsAudio = async (text) => {
     body: JSON.stringify({ text }),
   });
   if (!response.ok) throw new Error('TTS Failed');
-  const buffer = await response.arrayBuffer();
-  return new Blob([buffer], { type: 'audio/wav' });
+  // Keep the server's real content type (audio/mpeg) — labeling the blob as
+  // a different format breaks decoding in Firefox.
+  return await response.blob();
 };
 
 export const getSttTranscript = async (audioBlob, language = 'he') => {

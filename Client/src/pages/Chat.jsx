@@ -15,6 +15,7 @@ const Chat = () => {
     const messagesEndRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const ttsAudioRef = useRef(null);
     const audioContextRef = useRef(null);
     const analyserRef = useRef(null);
     const sourceRef = useRef(null);
@@ -43,6 +44,36 @@ const Chat = () => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // --- Text-to-speech playback ---
+    // Playback is always triggered from the user's Send click (handleSend),
+    // which satisfies browser autoplay rules. The ref only remembers the
+    // currently playing audio so the voice toggle can silence it.
+    const stopSpeech = () => {
+        const audio = ttsAudioRef.current;
+        if (audio) {
+            audio.pause();
+            URL.revokeObjectURL(audio.src);
+            ttsAudioRef.current = null;
+        }
+    };
+
+    const playSpeech = (audioBlob) => {
+        stopSpeech();
+        const url = URL.createObjectURL(audioBlob);
+        const audio = new Audio(url);
+        ttsAudioRef.current = audio;
+        audio.onended = () => URL.revokeObjectURL(url);
+        audio.play().catch(err => console.warn('TTS playback blocked by browser:', err));
+    };
+
+    const toggleVoice = () => {
+        if (autoPlayVoice) stopSpeech(); // turning voice off silences the current reply immediately
+        setAutoPlayVoice(!autoPlayVoice);
+    };
+
+    // Stop any playing speech when leaving the chat page
+    useEffect(() => stopSpeech, []);
 
     const validateInputLanguage = (text) => {
         const regex = /^[\u0590-\u05FF\u0600-\u06FF0-9\s.,?!'"(){}-]+$/;
@@ -74,33 +105,21 @@ const Chat = () => {
             }));
             const response = await sendChatMessage(text, userId, history, t('aiPrompt'));
 
-            try {
-                if (autoPlayVoice) {
-                    // Fetch audio while still showing "thinking" (loading is true)
-                    const audioBlob = await getTtsAudio(response.reply);
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    const audio = new Audio(audioUrl);
-
-                    // Now show the text, stop loading, and play audio simultaneously
-                    setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
-                    setLoading(false);
-
-                    audio.onended = () => {
-                        URL.revokeObjectURL(audioUrl);
-                    };
-
-                    await audio.play();
-                } else {
-                    // If autoPlayVoice is disabled, just show the text immediately
-                    setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
-                    setLoading(false);
+            let audioBlob = null;
+            if (autoPlayVoice) {
+                // Fetch audio while still showing "thinking" (loading is true)
+                try {
+                    audioBlob = await getTtsAudio(response.reply);
+                } catch (ttsErr) {
+                    console.error('Failed to fetch TTS audio:', ttsErr);
                 }
-            } catch (ttsErr) {
-                console.error("Failed to play TTS audio:", ttsErr);
-                // Fallback: show text even if audio fails
-                setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
-                setLoading(false);
             }
+
+            // Show the text exactly once, whether or not audio is available
+            setMessages(prev => [...prev, { sender: 'bot', text: response.reply }]);
+            setLoading(false);
+
+            if (audioBlob) playSpeech(audioBlob);
 
         } catch {
             setMessages(prev => [...prev, { sender: 'bot', text: 'Error communicating with server.' }]);
@@ -190,6 +209,7 @@ const Chat = () => {
     };
 
     const handleLogout = async () => {
+        stopSpeech();
         if (userId) await endSession(userId);
         localStorage.removeItem('chatUser');
         navigate('/login');
@@ -260,7 +280,7 @@ const Chat = () => {
                     <div className="chat-input-row">
                         <button
                             className={`icon-btn ${autoPlayVoice ? '' : 'voice-toggle-off'}`}
-                            onClick={() => setAutoPlayVoice(!autoPlayVoice)}
+                            onClick={toggleVoice}
                             data-tooltip={autoPlayVoice ? t('voiceOn') : t('voiceOff')}
                             aria-label={autoPlayVoice ? t('voiceOn') : t('voiceOff')}
                             aria-pressed={autoPlayVoice}
