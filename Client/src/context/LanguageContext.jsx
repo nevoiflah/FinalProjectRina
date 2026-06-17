@@ -63,6 +63,12 @@ const translations = {
         noLearnedFacts: 'עדיין לא נלמדו עובדות.',
         sourceQuestion: 'שאלה',
         sourceAnswer: 'תשובה',
+        styleLabel: 'סגנון',
+        styleFriendly: 'ידידותי',
+        styleFormal: 'רשמי',
+        audienceLabel: 'קהל',
+        audienceStandard: 'רגיל',
+        audienceSimple: 'פשוט ואיטי',
     },
     ar: {
         appTitle: 'مساعد روبين الأكاديمي',
@@ -124,6 +130,12 @@ const translations = {
         noLearnedFacts: 'لم يتم تعلّم أي حقائق بعد.',
         sourceQuestion: 'سؤال',
         sourceAnswer: 'إجابة',
+        styleLabel: 'الأسلوب',
+        styleFriendly: 'ودّي',
+        styleFormal: 'رسمي',
+        audienceLabel: 'الجمهور',
+        audienceStandard: 'عادي',
+        audienceSimple: 'بسيط وبطيء',
     }
 };
 

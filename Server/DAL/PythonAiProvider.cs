@@ -24,7 +24,8 @@ public class PythonAiProvider : IAiProvider
         string prompt,
         List<string>? context = null,
         List<ChatTurn>? history = null,
-        string? language = null)
+        string? language = null,
+        string? persona = null)
     {
         var url = $"{_pythonServiceUrl}/chat";
 
@@ -38,7 +39,8 @@ public class PythonAiProvider : IAiProvider
             history = (history ?? new List<ChatTurn>())
                 .Select(t => new { role = t.Role, content = t.Content })
                 .ToList(),
-            language = language ?? string.Empty
+            language = language ?? string.Empty,
+            persona = persona ?? string.Empty
         };
 
         var json = JsonSerializer.Serialize(requestBody);

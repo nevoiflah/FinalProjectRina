@@ -80,16 +80,21 @@ public class OpenAiSpeechProvider : ISpeechProvider
         return result.Text;
     }
 
-    public async Task<SpeechSynthesisResult> SynthesizeAsync(string text)
+    public async Task<SpeechSynthesisResult> SynthesizeAsync(string text, string? voice = null, double speed = 1.0)
     {
         // OpenAI TTS API endpoint
         const string url = "https://api.openai.com/v1/audio/speech";
+
+        // Voice picks the conversation "style"; speed supports the slower, accessible audience mode.
+        var allowed = new[] { "alloy", "echo", "fable", "onyx", "nova", "shimmer" };
+        var selectedVoice = (voice != null && allowed.Contains(voice)) ? voice : "nova";
 
         var requestBody = new
         {
             model = "tts-1",
             input = text,
-            voice = "nova" // Options: alloy, echo, fable, onyx, nova, shimmer
+            voice = selectedVoice,
+            speed = Math.Clamp(speed, 0.5, 2.0)
         };
 
         var json = JsonSerializer.Serialize(requestBody);

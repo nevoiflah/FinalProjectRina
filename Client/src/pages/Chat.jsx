@@ -4,6 +4,19 @@ import { Mic, Send, LogOut, LayoutDashboard, Globe, Volume2, VolumeX, AlertCircl
 import { sendChatMessage, getSttTranscript, getTtsAudio, endSession, submitFeedback } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 
+// Conversation style -> TTS voice + a tone directive for the system prompt.
+const STYLE_VOICE = { friendly: 'nova', formal: 'onyx' };
+const STYLE_PERSONA = {
+    friendly: 'Speak in a warm, friendly and encouraging tone.',
+    formal: 'Speak in a formal, professional and concise tone.',
+};
+// Target audience -> speech speed + a simplification directive (children / elderly / accessibility).
+const AUDIENCE_SPEED = { standard: 1.0, simple: 0.9 };
+const AUDIENCE_PERSONA = {
+    standard: '',
+    simple: 'The listener may be a child, an elderly person, or someone who needs accessibility: use very simple words and short sentences, avoid jargon, and briefly explain any term you use.',
+};
+
 const Chat = () => {
     const [messages, setMessages] = useState([]);
     const [inputVal, setInputVal] = useState('');
@@ -13,6 +26,8 @@ const Chat = () => {
     const [recording, setRecording] = useState(false);
     const [transcribing, setTranscribing] = useState(false);
     const [feedback, setFeedback] = useState({}); // message index -> 'up' | 'down'
+    const [style, setStyle] = useState('friendly');     // conversation style
+    const [audience, setAudience] = useState('standard'); // target-audience mode
     const messagesEndRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
@@ -92,12 +107,14 @@ const Chat = () => {
                 role: m.sender === 'user' ? 'user' : 'assistant',
                 content: m.text,
             }));
-            const response = await sendChatMessage(text, userId, history, t('aiPrompt'));
+            // Compose the style + audience adaptation sent to the model and the voice engine.
+            const persona = [STYLE_PERSONA[style], AUDIENCE_PERSONA[audience]].filter(Boolean).join(' ');
+            const response = await sendChatMessage(text, userId, history, t('aiPrompt'), persona);
 
             try {
                 if (autoPlayVoice) {
                     // Fetch audio while still showing "thinking" (loading is true)
-                    const audioBlob = await getTtsAudio(response.reply);
+                    const audioBlob = await getTtsAudio(response.reply, STYLE_VOICE[style], AUDIENCE_SPEED[audience]);
                     const audioUrl = URL.createObjectURL(audioBlob);
                     const audio = new Audio(audioUrl);
 
@@ -299,6 +316,23 @@ const Chat = () => {
                             </div>
                         )
                     )}
+
+                    <div className="chat-controls-row">
+                        <label className="chat-control">
+                            <span>{t('styleLabel')}</span>
+                            <select value={style} onChange={(e) => setStyle(e.target.value)}>
+                                <option value="friendly">{t('styleFriendly')}</option>
+                                <option value="formal">{t('styleFormal')}</option>
+                            </select>
+                        </label>
+                        <label className="chat-control">
+                            <span>{t('audienceLabel')}</span>
+                            <select value={audience} onChange={(e) => setAudience(e.target.value)}>
+                                <option value="standard">{t('audienceStandard')}</option>
+                                <option value="simple">{t('audienceSimple')}</option>
+                            </select>
+                        </label>
+                    </div>
 
                     <div className="chat-input-row">
                         <button

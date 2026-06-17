@@ -40,7 +40,7 @@ public class ChatController : ControllerBase
                 .ToList();
 
             var reply = await _chatService.GenerateReplyAsync(
-                request.Message, request.UserId, history, request.Language);
+                request.Message, request.UserId, history, request.Language, request.Persona);
             return Ok(new { reply });
         }
         catch (ArgumentException ex)
@@ -91,6 +91,7 @@ public record ChatRequest(
     string? Message,
     string? UserId,
     List<ChatTurnDto>? History = null,
-    string? Language = null);
+    string? Language = null,
+    string? Persona = null);
 
 public record FeedbackRequest(string? UserId, string? Question, string? Answer, string? Rating);

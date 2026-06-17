@@ -147,6 +147,11 @@ GENERAL RULES
         if isinstance(language, str) and language.strip():
             system_prompt += f"\n\n**Language requirement:** Respond ONLY in the following language: {language.strip()}."
 
+        # Optional conversation style + target-audience adaptation (chosen by the user in the UI).
+        persona = data.get('persona')
+        if isinstance(persona, str) and persona.strip():
+            system_prompt += f"\n\n**Style & audience adaptation:** {persona.strip()}"
+
         if 'context' in data and isinstance(data['context'], list) and len(data['context']) > 0:
             context_str = "\n".join([f"- {item}" for item in data['context']])
             system_prompt += f"\n\n**Relevant Ruppin Information (use to support your answer):**\n{context_str}\n"

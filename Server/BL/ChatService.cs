@@ -62,7 +62,7 @@ public class KnowledgeFact
 
 public interface IChatService
 {
-    Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null);
+    Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null, string? persona = null);
     Task EndSessionAsync(string userId);
 }
 
@@ -83,13 +83,13 @@ public class ChatService : IChatService
         _pythonServiceUrl = configuration["PythonService:Url"] ?? "http://localhost:5001";
     }
 
-    public async Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null)
+    public async Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null, string? persona = null)
     {
         if (string.IsNullOrWhiteSpace(message)) throw new ArgumentException("Message is required", nameof(message));
         if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException("User ID is required", nameof(userId));
 
         var context = await RetrieveContextAsync(message.Trim());
-        var reply = await _aiProvider.GenerateChatReplyAsync(message.Trim(), context, history, language);
+        var reply = await _aiProvider.GenerateChatReplyAsync(message.Trim(), context, history, language, persona);
         await LogChatInteraction(userId, message.Trim(), reply);
         return reply;
     }

@@ -9,5 +9,6 @@ public interface IAiProvider
         string prompt,
         List<string>? context = null,
         List<ChatTurn>? history = null,
-        string? language = null);
+        string? language = null,
+        string? persona = null);
 }

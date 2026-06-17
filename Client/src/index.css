@@ -878,6 +878,32 @@ body {
   }
 }
 
+/* ---- Conversation style + audience controls ---- */
+.chat-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 6px 4px 2px;
+}
+.chat-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.chat-control select {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--input-bg);
+  color: var(--text-dark);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.chat-control select:focus-visible { outline: 2px solid var(--primary-blue); }
+
 /* ---- Message feedback (self-improving RAG signal) ---- */
 .message-feedback {
   display: flex;

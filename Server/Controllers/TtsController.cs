@@ -19,7 +19,7 @@ public class TtsController : ControllerBase
     {
         try
         {
-            var result = await _speechService.SynthesizeAsync(request?.Text);
+            var result = await _speechService.SynthesizeAsync(request?.Text, request?.Voice, request?.Speed ?? 1.0);
             return File(result.Buffer, result.MimeType);
         }
         catch (ArgumentException ex)
@@ -29,4 +29,4 @@ public class TtsController : ControllerBase
     }
 }
 
-public record TtsRequest(string? Text);
+public record TtsRequest(string? Text, string? Voice = null, double? Speed = null);

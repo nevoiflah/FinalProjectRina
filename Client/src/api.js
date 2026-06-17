@@ -23,8 +23,8 @@ export const registerUser = async (userData) => {
   return response.data;
 };
 
-export const sendChatMessage = async (message, userId, history = [], language) => {
-  const response = await api.post('/api/chat', { message, userId, history, language });
+export const sendChatMessage = async (message, userId, history = [], language, persona) => {
+  const response = await api.post('/api/chat', { message, userId, history, language, persona });
   return response.data;
 };
 
@@ -33,15 +33,15 @@ export const fetchAdminStats = async (userId) => {
   return response.data;
 };
 
-export const getTtsAudio = async (text) => {
+export const getTtsAudio = async (text, voice, speed) => {
   const response = await fetch(`${API_BASE}/api/tts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, voice, speed }),
   });
   if (!response.ok) throw new Error('TTS Failed');
-  const buffer = await response.arrayBuffer();
-  return new Blob([buffer], { type: 'audio/wav' });
+  // Keep the server's real content type (audio/mpeg) so playback works across browsers.
+  return await response.blob();
 };
 
 export const getSttTranscript = async (audioBlob, language = 'he') => {
