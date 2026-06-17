@@ -24,9 +24,12 @@ public static class KnowledgeSeeder
                 Console.WriteLine($"Embedding dimension mismatch ({sample.Embedding.Length} vs {ExpectedEmbeddingDim}). Re-seeding knowledge base.");
                 force = true;
             }
-            else if (sample?.Embedding != null)
+            else
             {
-                return; // already seeded with correct embeddings
+                // Already populated (embeddings present at the correct dim, OR absent because
+                // sentence-transformers isn't installed in this environment). Either way, do NOT
+                // re-insert — re-inserting appended a duplicate copy of every fact on each startup.
+                return;
             }
         }
 
