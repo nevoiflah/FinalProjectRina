@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>פוסטר – מעטפת TTS/STT לרובוטים משופרים ב-GenAI</title>
+  <link rel="stylesheet" href="poster.css">
+</head>
+<body>
+  <!-- Shared SVG arrowhead -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#5b6b7a"></path>
+      </marker>
+    </defs>
+  </svg>
+
+  <div class="poster">
+
+    <!-- ===================== HEADER ===================== -->
+    <header class="header">
+      <div class="institution">המרכז האקדמי רופין · המחלקה למדעי המחשב</div>
+      <div class="project-title-he">מעטפת טקסט-לדיבור ודיבור-לטקסט לרובוטים וירטואליים ופיזיים משופרים באמצעות בינה מלאכותית גנרטיבית</div>
+      <div class="project-title-en">TTS &amp; STT Wrapper for Virtual and Physical Robots Enhanced by GenAI</div>
+      <div class="meta-row">
+        <div><span class="label">התמחות:</span> פיתוח מערכות תוכנה</div>
+        <div><span class="label">מנחה אקדמית:</span> ד"ר רינה צביאל-גירשין</div>
+        <div><span class="label">פרויקט מס':</span> 9 · תשפ"ו (2025–2026)</div>
+        <div><span class="label">סטודנטים:</span> נבו יפלח · ליאל ירדני · אדיר בן דיין</div>
+      </div>
+    </header>
+
+    <!-- ===================== 1. רקע ומוטיבציה ===================== -->
+    <section class="panel background">
+      <h2><span class="num">1</span>רקע ומוטיבציה</h2>
+      <p class="lead">רובוטים וסוכנים וירטואליים הופכים לחלק מחיי היומיום, אך האינטראקציה עִמם
+        עדיין מוגבלת לממשקים גרפיים או לתכנות מורכב.</p>
+      <ul>
+        <li>הצורך באינטראקציה טבעית ב<strong>שפה מדוברת</strong> הולך וגובר — במיוחד עבור ילדים,
+          קשישים ובעלי מוגבלויות.</li>
+        <li>מועמדים ללימודים זקוקים למענה <strong>מיידי, רב-לשוני וזמין 24/7</strong> על קבלה, מלגות ושכר לימוד.</li>
+        <li><strong>מוטיבציה:</strong> יועץ אקדמי קולי חכם ונגיש, כבסיס לפיתוח יישומים בחינוך,
+          בריאות ושירות לקוחות.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 2. בעיה, דרישות, מטרות ===================== -->
+    <section class="panel problem">
+      <h2><span class="num">2</span>בעיה · דרישות · מטרות</h2>
+      <ul>
+        <li><strong>בעיות:</strong> למודלי שפה אין "זיכרון ארגוני" (תשובות גנריות); שילוב STT+TTS+LLM מורכב;
+          למנהלים אין כלי בקרה על "מה שואלים מול מה עונים".</li>
+        <li><strong>דרישות (Use Cases):</strong> שאלה בקול/טקסט וקבלת הערכת התאמה; דירוג תשובה (חיובי/שלילי);
+          סקירה ואישור ידע שנלמד; צפייה בסטטיסטיקות.</li>
+        <li><strong>מטרות:</strong> מערכת E2E מאוחדת — דיבור + AI + זיכרון ארגוני נלמד, לוח בקרה ניהולי,
+          ותמיכה רב-לשונית (עברית/ערבית).</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 3. ארכיטקטורה ותיאור המערכת ===================== -->
+    <section class="panel arch">
+      <h2><span class="num">3</span>ארכיטקטורה ותיאור המערכת</h2>
+      <svg class="diagram" viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg">
+        <!-- boxes (LTR flow) -->
+        <rect class="diag-box" x="30"  y="60" width="250" height="90" rx="10"></rect>
+        <text class="diag-label" x="155" y="95"  text-anchor="middle">React / Vite Client</text>
+        <text class="diag-sub"   x="155" y="118" text-anchor="middle">Chat · Voice · Admin Dashboard</text>
+
+        <rect class="diag-box" x="375" y="60" width="250" height="90" rx="10"></rect>
+        <text class="diag-label" x="500" y="95"  text-anchor="middle">C# ASP.NET Core</text>
+        <text class="diag-sub"   x="500" y="118" text-anchor="middle">User · Chat · Admin · Learning</text>
+
+        <rect class="diag-box py" x="720" y="60" width="250" height="90" rx="10"></rect>
+        <text class="diag-label" x="845" y="95"  text-anchor="middle">Python Flask + OpenAI</text>
+        <text class="diag-sub"   x="845" y="118" text-anchor="middle">/chat · /distill · /embed</text>
+
+        <rect class="diag-box db" x="375" y="195" width="250" height="45" rx="8"></rect>
+        <text class="diag-label" x="500" y="223" text-anchor="middle">MongoDB Atlas</text>
+
+        <!-- arrows -->
+        <line class="diag-arrow" x1="280" y1="105" x2="375" y2="105"></line>
+        <line class="diag-arrow" x1="625" y1="105" x2="720" y2="105"></line>
+        <line class="diag-arrow" x1="500" y1="150" x2="500" y2="195"></line>
+        <text class="diag-sub" x="327" y="95"  text-anchor="middle">REST</text>
+        <text class="diag-sub" x="672" y="95"  text-anchor="middle">HTTP</text>
+      </svg>
+      <ul>
+        <li><strong>מיקרו-שירותים:</strong> הפרדת C# (לוגיקה עסקית) מ-Python (LLM/Embeddings) → גמישות והחלפת ספקים.</li>
+        <li><strong>מודולים:</strong> ניהול משתמשים · צ'אט+RAG · דיבור (Whisper STT / TTS) · שירות למידה · לוח בקרה.</li>
+        <li><strong>משתמשים:</strong> מועמד/סטודנט · מנהל. <strong>אוספי נתונים:</strong>
+          users · chatSessions · ruppinKnowledge · learningCandidates · chatFeedback.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 4. האלמנט החכם ===================== -->
+    <section class="panel smart">
+      <h2><span class="num">4</span>האלמנט החכם — RAG שמשתפר עם הזמן</h2>
+      <svg class="diagram" viewBox="0 0 1000 130" xmlns="http://www.w3.org/2000/svg">
+        <g>
+          <rect class="loop-node" x="10"  y="40" width="150" height="50" rx="25"></rect>
+          <text class="loop-label" x="85"  y="70" text-anchor="middle">משוב חיובי</text>
+          <rect class="loop-node" x="225" y="40" width="150" height="50" rx="25"></rect>
+          <text class="loop-label" x="300" y="70" text-anchor="middle">זיקוק לעובדה</text>
+          <rect class="loop-node" x="440" y="40" width="150" height="50" rx="25"></rect>
+          <text class="loop-label" x="515" y="70" text-anchor="middle">ניתוב לפי ביטחון</text>
+          <rect class="loop-node" x="655" y="40" width="150" height="50" rx="25"></rect>
+          <text class="loop-label" x="730" y="70" text-anchor="middle">הוספה למאגר</text>
+          <rect class="loop-node" x="855" y="40" width="135" height="50" rx="25"></rect>
+          <text class="loop-label" x="922" y="70" text-anchor="middle">שליפה (RAG)</text>
+          <line class="diag-arrow" x1="160" y1="65" x2="225" y2="65"></line>
+          <line class="diag-arrow" x1="375" y1="65" x2="440" y2="65"></line>
+          <line class="diag-arrow" x1="590" y1="65" x2="655" y2="65"></line>
+          <line class="diag-arrow" x1="805" y1="65" x2="855" y2="65"></line>
+        </g>
+      </svg>
+      <ul>
+        <li><strong>RAG סמנטי:</strong> כל שאלה מומרת לוקטור (<strong>paraphrase-multilingual-MiniLM-L12-v2</strong>,
+          384 מימדים) ונשלפות 3 העובדות הקרובות ביותר לפי דמיון קוסינוס.</li>
+        <li><strong>לולאת למידה מבוקרת:</strong> משוב חיובי → זיקוק לעובדה כללית <strong>נטולת מידע אישי</strong> + ביטחון.
+          ניתוב היברידי: ≥0.90 נוסף אוטומטית · 0.60–0.90 לאישור מנהל · נמוך נדחה. בדיקת כפילות מונעת הצפה.</li>
+        <li><strong>שיפור מתמשך:</strong> ככל שמצטברות עובדות מאומתות — הדיוק והכיסוי של תשובות עתידיות עולים
+          (<strong>מאגר ידע חי</strong>, ללא כיוונון-עדין יקר).</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 5. מסכי המערכת ===================== -->
+    <section class="panel screens">
+      <h2><span class="num">5</span>מסכי המערכת</h2>
+      <div class="shots">
+        <figure class="shot"><img src="assets/chat-feedback.png" alt="צ'אט עם דירוג"><figcaption>צ'אט עם דירוג משוב</figcaption></figure>
+        <figure class="shot"><img src="assets/admin-learning.png" alt="תור למידה"><figcaption>לוח בקרה — תור למידה (אישור/דחייה)</figcaption></figure>
+        <figure class="shot"><img src="assets/chat-voice.png" alt="שיחה קולית"><figcaption>מצב שיחה קולית</figcaption></figure>
+        <figure class="shot"><img src="assets/admin-sessions.png" alt="סטטיסטיקות"><figcaption>לוח בקרה — שיחות וסטטיסטיקות</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ===================== 6. תוצאות ומסקנות ===================== -->
+    <section class="panel results">
+      <h2><span class="num">6</span>תוצאות ומסקנות</h2>
+      <div class="results-grid">
+        <div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="num">2</div><div class="cap">שפות (he/ar)</div></div>
+            <div class="kpi"><div class="num">384</div><div class="cap">מימדי וקטור</div></div>
+            <div class="kpi"><div class="num">E2E</div><div class="cap">מערכת עובדת</div></div>
+          </div>
+          <ul>
+            <li><strong>תוצרים:</strong> צ'אט קולי רב-לשוני + RAG + לולאת למידה מבוקרת + לוח ניהול.</li>
+            <li><strong>מדדים מוצעים:</strong> זמן תגובה · מס' עובדות שנלמדו/אושרו · אחוז משוב חיובי · גידול המאגר לאורך זמן.</li>
+          </ul>
+        </div>
+        <div>
+          <p><strong>מסקנות:</strong></p>
+          <ul>
+            <li>ניתן להשיג "זיכרון ארגוני" שמשתפר ללא fine-tuning יקר — באמצעות RAG + <strong>שער איכות אנושי</strong>.</li>
+            <li>הפרדה למיקרו-שירותים הקלה על שילוב טכנולוגיות הדיבור וה-LLM והחלפת ספקים.</li>
+            <li>דירוג משתמשים (חיובי/שלילי) הוא אות איכות פשוט ויעיל להזנת לולאת הלמידה.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="footer">
+      <div class="qr"><img src="qr-live.svg" alt="QR לאפליקציה"><div class="qr-cap">סרקו לאפליקציה</div></div>
+      <div class="stack">
+        <span>React</span><span>Vite</span><span>C# ASP.NET Core</span><span>Python Flask</span>
+        <span>OpenAI GPT</span><span>Whisper STT/TTS</span><span>MongoDB Atlas</span><span>sentence-transformers RAG</span>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

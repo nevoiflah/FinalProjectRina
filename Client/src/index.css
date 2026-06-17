@@ -877,3 +877,162 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ---- Message feedback (self-improving RAG signal) ---- */
+.message-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color var(--transition), background-color var(--transition), opacity var(--transition);
+}
+
+.feedback-btn:hover:not(:disabled) {
+  color: var(--primary-blue);
+  background: rgba(29, 90, 139, 0.08);
+}
+
+.feedback-btn.feedback-active {
+  color: var(--primary-green);
+}
+
+.feedback-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.feedback-thanks {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ---- Admin: tabs + learning queue ---- */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.admin-tab-active {
+  background: var(--primary-blue);
+  color: var(--text-white);
+}
+
+.admin-tab-badge {
+  min-width: 18px;
+  padding: 0 6px;
+  font-size: 0.72rem;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 9px;
+  background: var(--primary-green);
+  color: var(--text-white);
+}
+
+.admin-section-title {
+  margin: 1rem 0 0.5rem;
+  color: var(--primary-blue);
+  font-size: 1rem;
+}
+
+.learning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.learning-card {
+  background: var(--surface);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.learning-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.learning-category {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.learning-confidence {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.learning-fact {
+  color: var(--text-dark);
+  line-height: 1.5;
+}
+
+.learning-source {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.learning-source summary {
+  cursor: pointer;
+}
+
+.learning-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.learning-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-white);
+}
+
+.learning-btn.approve { background: var(--primary-green); }
+.learning-btn.reject { background: #c0392b; }
+.learning-btn.prune {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 4px;
+}
+.learning-btn.prune:hover { color: #c0392b; }

@@ -31,6 +31,7 @@ builder.Services.AddScoped<ISpeechProvider, OpenAiSpeechProvider>();
 
 builder.Services.AddSingleton<KnowledgeCache>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<ILearningService, LearningService>();
 builder.Services.AddScoped<ISpeechService, SpeechService>();
 builder.Services.AddScoped<IUserService, UserService>();
 

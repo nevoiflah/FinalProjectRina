@@ -1,5 +1,6 @@
 using FinalProjectRina.Server.BL;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace FinalProjectRina.Server.Controllers;
@@ -9,20 +10,24 @@ namespace FinalProjectRina.Server.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ILearningService _learningService;
     private readonly IMongoCollection<User> _users;
     private readonly IMongoCollection<ChatSession> _sessions;
+    private readonly IMongoCollection<KnowledgeFact> _knowledge;
     private readonly IMongoDatabase _database;
     private readonly IConfiguration _configuration;
     private readonly KnowledgeCache _knowledgeCache;
 
-    public AdminController(IUserService userService, IMongoDatabase database, IConfiguration configuration, KnowledgeCache knowledgeCache)
+    public AdminController(IUserService userService, ILearningService learningService, IMongoDatabase database, IConfiguration configuration, KnowledgeCache knowledgeCache)
     {
         _userService = userService;
+        _learningService = learningService;
         _database = database;
         _configuration = configuration;
         _knowledgeCache = knowledgeCache;
         _users = database.GetCollection<User>("users");
         _sessions = database.GetCollection<ChatSession>("chatSessions");
+        _knowledge = database.GetCollection<KnowledgeFact>("ruppinKnowledge");
     }
 
     [HttpGet("users")]
@@ -143,10 +148,80 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> ReseedKnowledge([FromQuery] string adminId)
     {
         if (!IsAdmin(adminId)) return Unauthorized();
-        var apiKey = _configuration["OpenAI:ApiKey"] ?? "";
-        await KnowledgeSeeder.SeedAsync(_database, apiKey, force: true);
+        var pythonUrl = _configuration["PythonService:Url"] ?? "http://localhost:5001";
+        await KnowledgeSeeder.SeedAsync(_database, pythonUrl, force: true);
         _knowledgeCache.Invalidate();
         return Ok(new { message = "Knowledge base reseeded with embeddings." });
+    }
+
+    // ---- Self-improving RAG: review the facts the system wants to learn ----
+
+    [HttpGet("learning")]
+    public async Task<IActionResult> GetLearningQueue([FromQuery] string userId)
+    {
+        if (!IsAdmin(userId)) return Unauthorized();
+
+        var pending = await _learningService.GetPendingCandidatesAsync();
+        var result = pending.Select(c => new LearningCandidateDto(
+            Id: c.Id,
+            Fact: c.Fact,
+            Category: c.Category,
+            Confidence: Math.Round(c.Confidence, 2),
+            Question: c.Question,
+            Answer: c.Answer,
+            CreatedAt: c.CreatedAt));
+
+        return Ok(result);
+    }
+
+    [HttpPost("learning/{id}/approve")]
+    public async Task<IActionResult> ApproveLearning(string id, [FromQuery] string adminId, [FromBody] ApproveLearningRequest? body)
+    {
+        if (!IsAdmin(adminId)) return Unauthorized();
+        var ok = await _learningService.ApproveCandidateAsync(id, body?.Fact, body?.Category, adminId);
+        if (!ok) return NotFound(new { error = "Candidate not found or already reviewed." });
+        return Ok(new { message = "Fact added to the knowledge base." });
+    }
+
+    [HttpPost("learning/{id}/reject")]
+    public async Task<IActionResult> RejectLearning(string id, [FromQuery] string adminId)
+    {
+        if (!IsAdmin(adminId)) return Unauthorized();
+        var ok = await _learningService.RejectCandidateAsync(id, adminId);
+        if (!ok) return NotFound(new { error = "Candidate not found or already reviewed." });
+        return Ok(new { message = "Candidate rejected." });
+    }
+
+    [HttpGet("knowledge/learned")]
+    public async Task<IActionResult> GetLearnedFacts([FromQuery] string userId)
+    {
+        if (!IsAdmin(userId)) return Unauthorized();
+
+        var facts = await _knowledge.Find(f => f.Source == "learned")
+                                    .SortByDescending(f => f.CreatedAt)
+                                    .ToListAsync();
+
+        var result = facts.Select(f => new LearnedFactDto(
+            Id: f.Id.ToString(),
+            Category: f.Category,
+            FactText: f.FactText,
+            CreatedAt: f.CreatedAt));
+
+        return Ok(result);
+    }
+
+    [HttpDelete("knowledge/{id}")]
+    public async Task<IActionResult> PruneLearnedFact(string id, [FromQuery] string adminId)
+    {
+        if (!IsAdmin(adminId)) return Unauthorized();
+        if (!ObjectId.TryParse(id, out var objectId)) return BadRequest(new { error = "Invalid id." });
+
+        // Only learned facts can be pruned here; seeded facts are managed via reseed.
+        var result = await _knowledge.DeleteOneAsync(f => f.Id == objectId && f.Source == "learned");
+        if (result.DeletedCount == 0) return NotFound(new { error = "Learned fact not found." });
+
+        _knowledgeCache.Invalidate();
+        return Ok(new { message = "Learned fact removed." });
     }
 
     private bool IsAdmin(string userId)
@@ -167,3 +242,6 @@ public class AdminController : ControllerBase
 
 public record AdminUserDto(string UserId, string Name, string Email, string Organization, bool IsAdmin, DateTime JoinedAt, DateTime? LastLogin);
 public record AdminSessionDto(string SessionId, string UserName, string Question, string Result, DateTime Date);
+public record LearningCandidateDto(string Id, string Fact, string Category, double Confidence, string Question, string Answer, DateTime CreatedAt);
+public record LearnedFactDto(string Id, string Category, string FactText, DateTime CreatedAt);
+public record ApproveLearningRequest(string? Fact, string? Category);

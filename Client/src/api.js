@@ -23,8 +23,8 @@ export const registerUser = async (userData) => {
   return response.data;
 };
 
-export const sendChatMessage = async (message, userId) => {
-  const response = await api.post('/api/chat', { message, userId });
+export const sendChatMessage = async (message, userId, history = [], language) => {
+  const response = await api.post('/api/chat', { message, userId, history, language });
   return response.data;
 };
 
@@ -59,4 +59,34 @@ export const getSttTranscript = async (audioBlob, language = 'he') => {
 
 export const endSession = async (userId) => {
   await api.post('/api/chat/end', { userId });
+};
+
+export const submitFeedback = async (userId, question, answer, rating) => {
+  await api.post('/api/chat/feedback', { userId, question, answer, rating });
+};
+
+// --- Admin: self-improving RAG review ---
+export const fetchLearningQueue = async (adminId) => {
+  const response = await api.get(`/api/admin/learning?userId=${adminId}`);
+  return response.data;
+};
+
+export const approveLearningCandidate = async (adminId, id, fact, category) => {
+  const response = await api.post(`/api/admin/learning/${id}/approve?adminId=${adminId}`, { fact, category });
+  return response.data;
+};
+
+export const rejectLearningCandidate = async (adminId, id) => {
+  const response = await api.post(`/api/admin/learning/${id}/reject?adminId=${adminId}`);
+  return response.data;
+};
+
+export const fetchLearnedFacts = async (adminId) => {
+  const response = await api.get(`/api/admin/knowledge/learned?userId=${adminId}`);
+  return response.data;
+};
+
+export const pruneLearnedFact = async (adminId, id) => {
+  const response = await api.delete(`/api/admin/knowledge/${id}?adminId=${adminId}`);
+  return response.data;
 };

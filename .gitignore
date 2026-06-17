@@ -32,5 +32,10 @@ FinalProjectRina.zip
 # Logs
 *.log
 
-# Security
-Server/appsettings.json
+# Security — never commit real secrets. Use appsettings.example.json as the template.
+**/appsettings.json
+!**/appsettings.example.json
+**/appsettings.*.local.json
+**/.env
+**/.env.local
+**/secrets.json

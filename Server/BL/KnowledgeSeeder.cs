@@ -31,6 +31,8 @@ public static class KnowledgeSeeder
         }
 
         var facts = GetFacts();
+        var now = DateTime.UtcNow;
+        facts.ForEach(f => { f.Source = "seed"; f.CreatedAt = now; });
 
         if (!string.IsNullOrEmpty(pythonServiceUrl))
         {
@@ -62,7 +64,9 @@ public static class KnowledgeSeeder
             }
         }
 
-        if (force) col.DeleteMany(Builders<KnowledgeFact>.Filter.Empty);
+        // On a forced reseed, replace only the statically seeded facts — never wipe
+        // facts the system learned from chats (source == "learned").
+        if (force) col.DeleteMany(Builders<KnowledgeFact>.Filter.Ne(f => f.Source, "learned"));
         col.InsertMany(facts);
         Console.WriteLine($"Knowledge base seeded with {facts.Count} facts{(facts[0].Embedding != null ? $" + {ExpectedEmbeddingDim}-dim embeddings (sentence-transformers)" : " (no embeddings)")}.");
     }

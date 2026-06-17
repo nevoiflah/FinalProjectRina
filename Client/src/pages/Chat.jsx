@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Send, LogOut, LayoutDashboard, Globe, Volume2, VolumeX, AlertCircle } from 'lucide-react';
-import { sendChatMessage, getSttTranscript, getTtsAudio, endSession } from '../api';
+import { Mic, Send, LogOut, LayoutDashboard, Globe, Volume2, VolumeX, AlertCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { sendChatMessage, getSttTranscript, getTtsAudio, endSession, submitFeedback } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 
 const Chat = () => {
@@ -12,6 +12,7 @@ const Chat = () => {
     const [inputError, setInputError] = useState('');
     const [recording, setRecording] = useState(false);
     const [transcribing, setTranscribing] = useState(false);
+    const [feedback, setFeedback] = useState({}); // message index -> 'up' | 'down'
     const messagesEndRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
@@ -44,6 +45,25 @@ const Chat = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // A 👍 on a bot reply feeds the self-improving RAG loop; a 👎 is logged only.
+    const handleFeedback = async (idx, rating) => {
+        if (feedback[idx]) return; // one rating per message
+
+        // Pair the reply with the user question that prompted it.
+        let question = '';
+        for (let i = idx - 1; i >= 0; i--) {
+            if (messages[i].sender === 'user') { question = messages[i].text; break; }
+        }
+        if (!question) return; // e.g. the opening greeting — nothing to learn from
+
+        setFeedback(prev => ({ ...prev, [idx]: rating }));
+        try {
+            await submitFeedback(userId, question, messages[idx].text, rating);
+        } catch (err) {
+            console.error('Feedback failed:', err);
+        }
+    };
+
     const validateInputLanguage = (text) => {
         const regex = /^[\u0590-\u05FF\u0600-\u06FF0-9\s.,?!'"(){}-]+$/;
         return regex.test(text.trim());
@@ -64,9 +84,15 @@ const Chat = () => {
         setLoading(true);
 
         try {
-            // Secretly append the language instruction to force the AI's response language.
-            const textWithLangPrompt = `${text}\n\n[SYSTEM INSTRUCTION: ${t('aiPrompt')}]`;
-            const response = await sendChatMessage(textWithLangPrompt, userId);
+            // Pass the prior conversation so the AI actually remembers it. `messages` here is the
+            // conversation BEFORE this new turn (state updates are async), which is exactly the
+            // history we want. The language directive goes as a separate field so the stored/visible
+            // message text stays clean (no [SYSTEM INSTRUCTION] leaking into the transcript).
+            const history = messages.map(m => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.text,
+            }));
+            const response = await sendChatMessage(text, userId, history, t('aiPrompt'));
 
             try {
                 if (autoPlayVoice) {
@@ -220,6 +246,29 @@ const Chat = () => {
                     {messages.map((m, idx) => (
                         <div key={idx} className={`message ${m.sender}`}>
                             <div className="message-content">{m.text}</div>
+                            {m.sender === 'bot' && idx > 0 && (
+                                <div className="message-feedback">
+                                    <button
+                                        className={`feedback-btn ${feedback[idx] === 'up' ? 'feedback-active' : ''}`}
+                                        onClick={() => handleFeedback(idx, 'up')}
+                                        disabled={!!feedback[idx]}
+                                        data-tooltip={t('helpful')}
+                                        aria-label={t('helpful')}
+                                    >
+                                        <ThumbsUp size={14} />
+                                    </button>
+                                    <button
+                                        className={`feedback-btn ${feedback[idx] === 'down' ? 'feedback-active' : ''}`}
+                                        onClick={() => handleFeedback(idx, 'down')}
+                                        disabled={!!feedback[idx]}
+                                        data-tooltip={t('notHelpful')}
+                                        aria-label={t('notHelpful')}
+                                    >
+                                        <ThumbsDown size={14} />
+                                    </button>
+                                    {feedback[idx] && <span className="feedback-thanks">{t('feedbackThanks')}</span>}
+                                </div>
+                            )}
                         </div>
                     ))}
                     {loading && (

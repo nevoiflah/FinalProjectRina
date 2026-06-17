@@ -20,15 +20,25 @@ public class PythonAiProvider : IAiProvider
         _pythonServiceUrl = configuration["PythonService:Url"] ?? "http://localhost:5000";
     }
 
-    public async Task<string> GenerateChatReplyAsync(string prompt, List<string>? context = null)
+    public async Task<string> GenerateChatReplyAsync(
+        string prompt,
+        List<string>? context = null,
+        List<ChatTurn>? history = null,
+        string? language = null)
     {
         var url = $"{_pythonServiceUrl}/chat";
 
         var requestBody = new
         {
             message = prompt,
-            model = "gpt-3.5-turbo",
-            context = context ?? new List<string>() 
+            // gpt-4o-mini follows the structured advisor prompt far better than gpt-3.5-turbo
+            // and has much stronger multi-turn memory in Hebrew/Arabic, at low cost.
+            model = "gpt-4o-mini",
+            context = context ?? new List<string>(),
+            history = (history ?? new List<ChatTurn>())
+                .Select(t => new { role = t.Role, content = t.Content })
+                .ToList(),
+            language = language ?? string.Empty
         };
 
         var json = JsonSerializer.Serialize(requestBody);

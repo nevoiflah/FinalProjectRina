@@ -7,6 +7,7 @@ using MongoDB.Driver;
 
 namespace FinalProjectRina.Server.BL;
 
+[BsonIgnoreExtraElements] // tolerate fields written by other branches (e.g. "messages")
 public class ChatSession
 {
     [BsonId]
@@ -29,6 +30,7 @@ public class ChatSession
     public DateTime? EndedAt { get; set; }
 }
 
+[BsonIgnoreExtraElements]
 public class KnowledgeFact
 {
     [BsonId]
@@ -42,11 +44,25 @@ public class KnowledgeFact
 
     [BsonElement("embedding")]
     public float[]? Embedding { get; set; }
+
+    /// <summary>"seed" for statically seeded facts, "learned" for facts distilled from rated chats.</summary>
+    [BsonElement("source")]
+    [BsonIgnoreIfNull]
+    public string? Source { get; set; }
+
+    /// <summary>For learned facts: the id of the LearningCandidate it came from.</summary>
+    [BsonElement("provenance")]
+    [BsonIgnoreIfNull]
+    public string? Provenance { get; set; }
+
+    [BsonElement("createdAt")]
+    [BsonIgnoreIfDefault]
+    public DateTime CreatedAt { get; set; }
 }
 
 public interface IChatService
 {
-    Task<string> GenerateReplyAsync(string? message, string? userId);
+    Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null);
     Task EndSessionAsync(string userId);
 }
 
@@ -67,14 +83,14 @@ public class ChatService : IChatService
         _pythonServiceUrl = configuration["PythonService:Url"] ?? "http://localhost:5001";
     }
 
-    public async Task<string> GenerateReplyAsync(string? message, string? userId)
+    public async Task<string> GenerateReplyAsync(string? message, string? userId, List<ChatTurn>? history = null, string? language = null)
     {
         if (string.IsNullOrWhiteSpace(message)) throw new ArgumentException("Message is required", nameof(message));
         if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException("User ID is required", nameof(userId));
 
         var context = await RetrieveContextAsync(message.Trim());
-        var reply = await _aiProvider.GenerateChatReplyAsync(message.Trim(), context);
-        await LogChatInteraction(userId, message, reply);
+        var reply = await _aiProvider.GenerateChatReplyAsync(message.Trim(), context, history, language);
+        await LogChatInteraction(userId, message.Trim(), reply);
         return reply;
     }
 
@@ -87,15 +103,12 @@ public class ChatService : IChatService
                                .Select(w => w.ToLower())
                                .ToList();
 
-            // Run embedding call and history fetch in parallel
-            var embeddingTask = GetEmbeddingAsync(query);
-            var historyTask = _sessions
-                .Find(s => s.FinalResult != null)
-                .SortByDescending(s => s.StartedAt)
-                .Limit(100)
-                .ToListAsync();
-
-            await Task.WhenAll(embeddingTask, historyTask);
+            // Embed the query for semantic retrieval. We deliberately do NOT pull in
+            // other users' past FinalResult answers anymore: that crude keyword reuse
+            // injected un-vetted advice and hurt accuracy. Knowledge now grows only
+            // through the vetted learning loop (LearningService), and those learned
+            // facts live in the same `ruppinKnowledge` cache retrieved below.
+            var queryEmbedding = await GetEmbeddingAsync(query);
 
             // Facts come from in-memory cache — no DB round-trip
             var allFacts = await _knowledgeCache.GetFactsAsync();
@@ -104,7 +117,6 @@ public class ChatService : IChatService
             List<string> bestFactMatches;
             if (factsWithEmbeddings.Count > 0)
             {
-                var queryEmbedding = embeddingTask.Result;
                 bestFactMatches = factsWithEmbeddings
                     .Select(f => new { f.FactText, Score = CosineSimilarity(queryEmbedding, f.Embedding!) })
                     .Where(x => x.Score > 0.3f)
@@ -124,16 +136,7 @@ public class ChatService : IChatService
                     .ToList();
             }
 
-            var bestHistoryMatches = historyTask.Result
-                .Select(s => new { s.FinalResult, Score = keywords.Count(k => (s.InitialQuestion ?? "").ToLower().Contains(k)) })
-                .Where(x => x.Score > 0)
-                .OrderByDescending(x => x.Score)
-                .Take(2)
-                .Select(x => x.FinalResult!)
-                .ToList();
-
-            bestHistoryMatches.AddRange(bestFactMatches);
-            return bestHistoryMatches;
+            return bestFactMatches;
         }
         catch (Exception ex)
         {
