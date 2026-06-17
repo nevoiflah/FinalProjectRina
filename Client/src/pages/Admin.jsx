@@ -155,10 +155,10 @@ const Admin = () => {
                                         <tbody>
                                             {stats.map((s, idx) => (
                                                 <tr key={idx}>
-                                                    <td className="admin-user-cell">{s.userName}</td>
-                                                    <td>{s.question || 'N/A'}</td>
-                                                    <td>{s.result || 'N/A'}</td>
-                                                    <td className="admin-date-cell">
+                                                    <td className="admin-user-cell" data-label={t('user')}>{s.userName}</td>
+                                                    <td data-label={t('firstTopic')}>{s.question || 'N/A'}</td>
+                                                    <td data-label={t('finalAnalysis')}>{s.result || 'N/A'}</td>
+                                                    <td className="admin-date-cell" data-label={t('date')}>
                                                         {new Date(s.date).toLocaleDateString('he-IL')}
                                                     </td>
                                                 </tr>

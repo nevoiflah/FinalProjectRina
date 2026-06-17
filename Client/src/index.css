@@ -674,12 +674,14 @@ body {
   }
 
   .chat-header {
-    padding: 14px 14px;
+    /* Reserve a top strip so the floating language toggle never overlaps the
+       title or the action buttons on narrow screens. */
+    padding: 52px 14px 14px;
   }
 
   .chat-title-block.with-toggle-space {
     margin-right: 0;
-    padding-top: 36px;
+    padding-top: 0;
   }
 
   .chat-messages {
@@ -718,6 +720,31 @@ body {
 
   .admin-summary {
     grid-template-columns: 1fr;
+  }
+
+  /* Sessions table -> stacked cards on mobile (no horizontal scroll / clipping). */
+  .admin-table-wrap { border: none; background: transparent; overflow-x: visible; }
+  .admin-table { min-width: 0; }
+  .admin-table thead { display: none; }
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td { display: block; width: 100%; }
+  .admin-table tr {
+    border: 1px solid #dbe7ef;
+    border-radius: 10px;
+    background: #fff;
+    margin-bottom: 10px;
+    padding: 6px 4px;
+  }
+  .admin-table td { border: none; padding: 7px 12px; width: auto !important; }
+  .admin-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 2px;
   }
 }
 
