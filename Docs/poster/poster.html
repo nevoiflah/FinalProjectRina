@@ -20,14 +20,20 @@
 
     <!-- ===================== HEADER ===================== -->
     <header class="header">
-      <div class="institution">המרכז האקדמי רופין · המחלקה למדעי המחשב</div>
-      <div class="project-title-he">מעטפת טקסט-לדיבור ודיבור-לטקסט לרובוטים וירטואליים ופיזיים משופרים באמצעות בינה מלאכותית גנרטיבית</div>
-      <div class="project-title-en">TTS &amp; STT Wrapper for Virtual and Physical Robots Enhanced by GenAI</div>
-      <div class="meta-row">
-        <div><span class="label">התמחות:</span> פיתוח מערכות תוכנה</div>
-        <div><span class="label">מנחה אקדמית:</span> ד"ר רינה צביאל-גירשין</div>
-        <div><span class="label">פרויקט מס':</span> 9 · תשפ"ו (2025–2026)</div>
-        <div><span class="label">סטודנטים:</span> נבו יפלח · ליאל ירדני · אדיר בן דיין</div>
+      <div class="header-main">
+        <div class="institution">המרכז האקדמי רופין · המחלקה למדעי המחשב</div>
+        <div class="project-title-he">מעטפת טקסט-לדיבור ודיבור-לטקסט לרובוטים וירטואליים ופיזיים משופרים באמצעות בינה מלאכותית גנרטיבית</div>
+        <div class="project-title-en">TTS &amp; STT Wrapper for Virtual and Physical Robots Enhanced by GenAI</div>
+        <div class="meta-row">
+          <div><span class="label">התמחות:</span> פיתוח מערכות תוכנה</div>
+          <div><span class="label">מנחה אקדמית:</span> ד"ר רינה צביאל-גירשין</div>
+          <div><span class="label">פרויקט מס':</span> 9 · תשפ"ו (2025–2026)</div>
+          <div><span class="label">סטודנטים:</span> נבו יפלח · ליאל ירדני · אדיר בן דיין</div>
+        </div>
+      </div>
+      <div class="header-qr">
+        <img src="qr-live.svg" alt="QR לאפליקציה">
+        <span>סרקו לאפליקציה</span>
       </div>
     </header>
 
@@ -90,6 +96,8 @@
         <li><strong>מודולים:</strong> ניהול משתמשים · צ'אט+RAG · דיבור (Whisper STT / TTS) · שירות למידה · לוח בקרה.</li>
         <li><strong>משתמשים:</strong> מועמד/סטודנט · מנהל. <strong>אוספי נתונים:</strong>
           users · chatSessions · ruppinKnowledge · learningCandidates · chatFeedback.</li>
+        <li><strong>מעטפת אגנוסטית לחומרה:</strong> כל רובוט (NAO · Pepper · Raspberry Pi · ROS) מתחבר ל-API ב-REST
+          (STT → Chat → TTS) דרך robot_client.py — וירטואלי ופיזי כאחד.</li>
       </ul>
     </section>
 
@@ -121,6 +129,8 @@
           ניתוב היברידי: ≥0.90 נוסף אוטומטית · 0.60–0.90 לאישור מנהל · נמוך נדחה. בדיקת כפילות מונעת הצפה.</li>
         <li><strong>שיפור מתמשך:</strong> ככל שמצטברות עובדות מאומתות — הדיוק והכיסוי של תשובות עתידיות עולים
           (<strong>מאגר ידע חי</strong>, ללא כיוונון-עדין יקר).</li>
+        <li><strong>שליטה בקול ובסגנון:</strong> בחירת סגנון שיחה (ידידותי/רשמי → קול וטון) והתאמת קהל יעד —
+          מצב "פשוט ואיטי" (מילים פשוטות ודיבור איטי) לילדים, קשישים ונגישות. דיבור דו-כיווני: Whisper (STT) + TTS.</li>
       </ul>
     </section>
 
@@ -163,7 +173,6 @@
 
     <!-- ===================== FOOTER ===================== -->
     <footer class="footer">
-      <div class="qr"><img src="qr-live.svg" alt="QR לאפליקציה"><div class="qr-cap">סרקו לאפליקציה</div></div>
       <div class="stack">
         <span>React</span><span>Vite</span><span>C# ASP.NET Core</span><span>Python Flask</span>
         <span>OpenAI GPT</span><span>Whisper STT/TTS</span><span>MongoDB Atlas</span><span>sentence-transformers RAG</span>

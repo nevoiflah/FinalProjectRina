@@ -317,22 +317,24 @@ const Chat = () => {
                         )
                     )}
 
-                    <div className="chat-controls-row">
-                        <label className="chat-control">
-                            <span>{t('styleLabel')}</span>
-                            <select value={style} onChange={(e) => setStyle(e.target.value)}>
-                                <option value="friendly">{t('styleFriendly')}</option>
-                                <option value="formal">{t('styleFormal')}</option>
-                            </select>
-                        </label>
-                        <label className="chat-control">
-                            <span>{t('audienceLabel')}</span>
-                            <select value={audience} onChange={(e) => setAudience(e.target.value)}>
-                                <option value="standard">{t('audienceStandard')}</option>
-                                <option value="simple">{t('audienceSimple')}</option>
-                            </select>
-                        </label>
-                    </div>
+                    {autoPlayVoice && (
+                        <div className="chat-controls-row">
+                            <label className="chat-control">
+                                <span>{t('styleLabel')}</span>
+                                <select value={style} onChange={(e) => setStyle(e.target.value)}>
+                                    <option value="friendly">{t('styleFriendly')}</option>
+                                    <option value="formal">{t('styleFormal')}</option>
+                                </select>
+                            </label>
+                            <label className="chat-control">
+                                <span>{t('audienceLabel')}</span>
+                                <select value={audience} onChange={(e) => setAudience(e.target.value)}>
+                                    <option value="standard">{t('audienceStandard')}</option>
+                                    <option value="simple">{t('audienceSimple')}</option>
+                                </select>
+                            </label>
+                        </div>
+                    )}
 
                     <div className="chat-input-row">
                         <button

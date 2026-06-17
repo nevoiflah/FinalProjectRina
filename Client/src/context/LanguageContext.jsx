@@ -68,7 +68,7 @@ const translations = {
         styleFormal: 'רשמי',
         audienceLabel: 'קהל',
         audienceStandard: 'רגיל',
-        audienceSimple: 'פשוט ואיטי',
+        audienceSimple: 'נגיש',
     },
     ar: {
         appTitle: 'مساعد روبين الأكاديمي',
@@ -135,7 +135,7 @@ const translations = {
         styleFormal: 'رسمي',
         audienceLabel: 'الجمهور',
         audienceStandard: 'عادي',
-        audienceSimple: 'بسيط وبطيء',
+        audienceSimple: 'ميسّر',
     }
 };
 
