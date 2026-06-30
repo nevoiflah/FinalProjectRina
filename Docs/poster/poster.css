@@ -72,7 +72,7 @@ body {
     "results results"
     "footer  footer";
   grid-template-rows: auto auto auto auto auto auto auto;
-  gap: 5mm;
+  gap: 4.5mm;
   align-content: space-between;   /* fill full height: hero top, footer bottom */
 }
 
@@ -91,17 +91,11 @@ body {
   gap: 14mm;
 }
 .hero-main { flex: 1; min-width: 0; position: relative; z-index: 2; display: flex; flex-direction: column; }
-.brand {
-  font-family: 'Rubik', sans-serif;
-  font-weight: 700;
-  font-size: 24pt;
-  letter-spacing: .2pt;
-  color: #cfe6fb;
-  display: flex;
-  align-items: center;
-  gap: 4mm;
-}
-.brand .dot { width: 4mm; height: 4mm; border-radius: 50%; background: var(--green-tint); flex: none; }
+.brand { display: flex; align-items: center; gap: 4mm; }
+.brand-logo { display: inline-flex; flex: none; }
+.brand-logo img { height: 15mm; width: auto; display: block; }
+.brand-dept { font-family: 'Rubik', sans-serif; font-weight: 700; font-size: 21pt; color: #fff; }
+.brand-dept::before { content: "·"; color: var(--green-tint); font-weight: 900; margin-inline-end: 3.5mm; }
 
 .headline {
   font-family: 'Rubik', sans-serif;
@@ -161,7 +155,7 @@ body {
 /* hero right rail: QR + voice equalizer motif */
 .hero-rail {
   flex: none;
-  width: 56mm;
+  width: 70mm;
   position: relative;
   z-index: 2;
   display: flex;
@@ -172,9 +166,9 @@ body {
 .qr {
   background: #fff;
   border-radius: 4mm;
-  padding: 3mm;
+  padding: 3.5mm;
   box-shadow: var(--shadow-lg);
-  width: 50mm;
+  width: 66mm;
 }
 .qr img { width: 100%; display: block; }
 .qr-cap {
@@ -204,7 +198,21 @@ body {
 .screens{ grid-area: screens; }
 .results{ grid-area: results; }
 
-/* Section header: eyebrow + title, no decorative numbering */
+/* Section header: icon emblem + eyebrow + title */
+.sec-head { display: flex; align-items: center; gap: 4.5mm; margin-bottom: 3.5mm; }
+.sec-titles { min-width: 0; }
+.sec-ic {
+  flex: none;
+  width: 15mm; height: 15mm;
+  border-radius: 50%;
+  background: var(--blue);
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow);
+}
+.sec-ic.green { background: var(--green); }
+.sec-ic svg { width: 8.4mm; height: 8.4mm; fill: #fff; }
+.sec-head .sec-titles h2 { margin: 1mm 0 0; }
+
 .eyebrow {
   font-family: 'Rubik', sans-serif;
   font-weight: 700;

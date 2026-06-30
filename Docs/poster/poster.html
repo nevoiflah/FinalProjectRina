@@ -31,6 +31,11 @@
     <symbol id="ic-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0h-2a5 5 0 0 1-10 0zm6 7.9V22h2v-3.1z"></path></symbol>
     <symbol id="ic-ai" viewBox="0 0 24 24"><path d="M11 2l1.7 6.1L19 10l-6.3 1.9L11 18l-1.7-6.1L3 10l6.3-1.9z"></path><path d="M18.4 13l.7 2.6 2.6.7-2.6.7-.7 2.6-.7-2.6-2.6-.7 2.6-.7z"></path></symbol>
     <symbol id="ic-stack" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="3.6" rx="1.8"></rect><rect x="4" y="10.2" width="16" height="3.6" rx="1.8"></rect><rect x="4" y="16.4" width="16" height="3.6" rx="1.8"></rect></symbol>
+    <symbol id="sec-bg" viewBox="0 0 24 24"><path d="M5 4h14a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-7l-5 4v-4H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"></path></symbol>
+    <symbol id="sec-problem" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 5.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z"></path><circle cx="12" cy="12" r="2"></circle></symbol>
+    <symbol id="sec-arch" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="6" rx="1.5"></rect><rect x="2" y="16" width="6" height="6" rx="1.5"></rect><rect x="16" y="16" width="6" height="6" rx="1.5"></rect><rect x="11" y="8" width="2" height="4"></rect><rect x="5" y="11" width="14" height="2"></rect><rect x="4" y="12" width="2" height="4"></rect><rect x="18" y="12" width="2" height="4"></rect></symbol>
+    <symbol id="sec-screens" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8l-1-3H9z"></path></symbol>
+    <symbol id="sec-results" viewBox="0 0 24 24"><rect x="3" y="13" width="4.6" height="8" rx="1.2"></rect><rect x="9.7" y="8" width="4.6" height="13" rx="1.2"></rect><rect x="16.4" y="3" width="4.6" height="18" rx="1.2"></rect></symbol>
   </svg>
 
   <div class="poster">
@@ -38,7 +43,10 @@
     <!-- ============================ HERO ============================ -->
     <header class="hero">
       <div class="hero-main">
-        <div class="brand"><span class="dot"></span>המרכז האקדמי רופין · המחלקה למדעי המחשב</div>
+        <div class="brand">
+          <span class="brand-logo"><img src="assets/ruppin-logo-white.svg" alt="המרכז האקדמי רופין"></span>
+          <span class="brand-dept">המחלקה למדעי המחשב</span>
+        </div>
 
         <h1 class="headline">קול חכם,<br><span class="learn">זיכרון שלומד.</span></h1>
 
@@ -80,8 +88,13 @@
 
     <!-- ===================== רקע ===================== -->
     <section class="panel bg">
-      <div class="eyebrow">רקע ומוטיבציה</div>
-      <h2>מדברים — לא מקלידים</h2>
+      <div class="sec-head">
+        <span class="sec-ic"><svg aria-hidden="true"><use href="#sec-bg"></use></svg></span>
+        <div class="sec-titles">
+          <div class="eyebrow">רקע ומוטיבציה</div>
+          <h2>מדברים — לא מקלידים</h2>
+        </div>
+      </div>
       <p class="lead">רובוטים וסוכנים קוליים נכנסים לחיי היומיום, אך ההתאמה אליהם עדיין מורכבת.</p>
       <ul>
         <li>מועמדים ללימודים זקוקים למענה <strong>מיידי, רב-לשוני וזמין 24/7</strong> על קבלה, מלגות ושכר לימוד.</li>
@@ -91,8 +104,13 @@
 
     <!-- ===================== בעיה ומטרה ===================== -->
     <section class="panel goal">
-      <div class="eyebrow">הבעיה והמטרה</div>
-      <h2>זיכרון ארגוני שחסר ל-AI</h2>
+      <div class="sec-head">
+        <span class="sec-ic"><svg aria-hidden="true"><use href="#sec-problem"></use></svg></span>
+        <div class="sec-titles">
+          <div class="eyebrow">הבעיה והמטרה</div>
+          <h2>זיכרון ארגוני שחסר ל-AI</h2>
+        </div>
+      </div>
       <ul>
         <li><strong>הבעיה:</strong> למודלי שפה אין "זיכרון ארגוני" → תשובות גנריות. שילוב STT+TTS+LLM מורכב.</li>
         <li><strong>המטרה:</strong> מערכת קצה-לקצה — דיבור + AI + זיכרון נלמד ומאומת, עם לוח בקרה ניהולי.</li>
@@ -101,8 +119,13 @@
 
     <!-- ===================== ארכיטקטורה ===================== -->
     <section class="panel arch">
-      <div class="eyebrow">המערכת</div>
-      <h2>ארכיטקטורת מיקרו-שירותים</h2>
+      <div class="sec-head">
+        <span class="sec-ic"><svg aria-hidden="true"><use href="#sec-arch"></use></svg></span>
+        <div class="sec-titles">
+          <div class="eyebrow">המערכת</div>
+          <h2>ארכיטקטורת מיקרו-שירותים</h2>
+        </div>
+      </div>
       <svg class="diagram" viewBox="0 0 1000 230" xmlns="http://www.w3.org/2000/svg" role="img"
            aria-label="זרימת המערכת: React אל C# אל Python, ומסד MongoDB">
         <!-- boxes -->
@@ -142,9 +165,12 @@
     <!-- ===================== SIGNATURE: learning loop ===================== -->
     <section class="loop">
       <div class="loop-head">
-        <div>
-          <div class="eyebrow">האלמנט החכם</div>
-          <h2>RAG שמשתפר בכל שיחה</h2>
+        <div class="sec-head">
+          <span class="sec-ic green"><svg aria-hidden="true"><use href="#ic-ai"></use></svg></span>
+          <div class="sec-titles">
+            <div class="eyebrow">האלמנט החכם</div>
+            <h2>RAG שמשתפר בכל שיחה</h2>
+          </div>
         </div>
         <div class="gauge" aria-hidden="true">
           <div class="gauge-cap">שער איכות אנושי · ניתוב לפי דמיון (cosine)</div>
@@ -219,8 +245,13 @@
 
     <!-- ===================== מסכים ===================== -->
     <section class="panel screens">
-      <div class="eyebrow">מסכי המערכת</div>
-      <h2>מהשיחה ועד שער הלמידה</h2>
+      <div class="sec-head">
+        <span class="sec-ic"><svg aria-hidden="true"><use href="#sec-screens"></use></svg></span>
+        <div class="sec-titles">
+          <div class="eyebrow">מסכי המערכת</div>
+          <h2>מהשיחה ועד שער הלמידה</h2>
+        </div>
+      </div>
       <div class="shots">
         <figure class="shot"><div class="bar"></div><img src="assets/chat-voice.png" alt="מסך שיחה קולית"><figcaption>שיחה קולית</figcaption></figure>
         <figure class="shot"><div class="bar"></div><img src="assets/chat-feedback.png" alt="צ'אט עם דירוג"><figcaption>צ'אט + דירוג <svg class="ic" aria-hidden="true"><use href="#thumb"></use></svg><svg class="ic down" aria-hidden="true"><use href="#thumb"></use></svg></figcaption></figure>
@@ -231,8 +262,13 @@
 
     <!-- ===================== תוצאות ומסקנות ===================== -->
     <section class="panel results">
-      <div class="eyebrow">תוצאות ומסקנות</div>
-      <h2>ידע שמצטבר — שירות שמשתפר</h2>
+      <div class="sec-head">
+        <span class="sec-ic"><svg aria-hidden="true"><use href="#sec-results"></use></svg></span>
+        <div class="sec-titles">
+          <div class="eyebrow">תוצאות ומסקנות</div>
+          <h2>ידע שמצטבר — שירות שמשתפר</h2>
+        </div>
+      </div>
       <div class="results-grid">
         <div class="example">
           <div class="ex-head">דוגמה אמיתית מהמערכת</div>
