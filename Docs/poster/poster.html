@@ -3,179 +3,279 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>פוסטר – מעטפת TTS/STT לרובוטים משופרים ב-GenAI</title>
+  <title>פוסטר – מעטפת קול חכמה לרובוטים, משופרת ב-GenAI</title>
   <link rel="stylesheet" href="poster.css">
 </head>
 <body>
-  <!-- Shared SVG arrowhead -->
-  <svg width="0" height="0" style="position:absolute">
+  <!-- Shared SVG markers -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-        <path d="M0,0 L10,5 L0,10 z" fill="#5b6b7a"></path>
+        <path d="M0,0 L10,5 L0,10 z" fill="#93a4b4"></path>
+      </marker>
+      <marker id="arrow-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#4FA12C"></path>
       </marker>
     </defs>
+    <symbol id="thumb" viewBox="0 0 24 24">
+      <path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path>
+    </symbol>
+    <symbol id="lg-react" viewBox="0 0 24 24"><path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z"></path></symbol>
+    <symbol id="lg-vite" viewBox="0 0 24 24"><path d="m8.286 10.578.512-8.657a.306.306 0 0 1 .247-.282L17.377.006a.306.306 0 0 1 .353.385l-1.558 5.403a.306.306 0 0 0 .352.385l2.388-.46a.306.306 0 0 1 .332.438l-6.79 13.55-.123.19a.294.294 0 0 1-.252.14c-.177 0-.35-.152-.305-.369l1.095-5.301a.306.306 0 0 0-.388-.355l-1.433.435a.306.306 0 0 1-.389-.354l.69-3.375a.306.306 0 0 0-.37-.36l-2.32.536a.306.306 0 0 1-.374-.316zm14.976-7.926L17.284 3.74l-.544 1.887 2.077-.4a.8.8 0 0 1 .84.369.8.8 0 0 1 .034.783L12.9 19.93l-.013.025-.015.023-.122.19a.801.801 0 0 1-.672.37.826.826 0 0 1-.634-.302.8.8 0 0 1-.16-.67l1.029-4.981-1.12.34a.81.81 0 0 1-.86-.262.802.802 0 0 1-.165-.67l.63-3.08-2.027.468a.808.808 0 0 1-.768-.233.81.81 0 0 1-.217-.6l.389-6.57-7.44-1.33a.612.612 0 0 0-.64.906L11.58 23.691a.612.612 0 0 0 1.066-.004l11.26-20.135a.612.612 0 0 0-.644-.9z"></path></symbol>
+    <symbol id="lg-dotnet" viewBox="0 0 24 24"><path d="M24 8.77h-2.468v7.565h-1.425V8.77h-2.462V7.53H24zm-6.852 7.565h-4.821V7.53h4.63v1.24h-3.205v2.494h2.953v1.234h-2.953v2.604h3.396zm-6.708 0H8.882L4.78 9.863a2.896 2.896 0 0 1-.258-.51h-.036c.032.189.048.592.048 1.21v5.772H3.157V7.53h1.659l3.965 6.32c.167.261.275.442.323.54h.024c-.04-.233-.06-.629-.06-1.185V7.529h1.372zm-8.703-.693a.868.829 0 0 1-.869.829.868.829 0 0 1-.868-.83.868.829 0 0 1 .868-.828.868.829 0 0 1 .869.829Z"></path></symbol>
+    <symbol id="lg-python" viewBox="0 0 24 24"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"></path></symbol>
+    <symbol id="lg-openai" viewBox="0 0 24 24"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"></path></symbol>
+    <symbol id="lg-mongodb" viewBox="0 0 24 24"><path d="M17.193 9.555c-1.264-5.58-4.252-7.414-4.573-8.115-.28-.394-.53-.954-.735-1.44-.036.495-.055.685-.523 1.184-.723.566-4.438 3.682-4.74 10.02-.282 5.912 4.27 9.435 4.888 9.884l.07.05A73.49 73.49 0 0111.91 24h.481c.114-1.032.284-2.056.51-3.07.417-.296.604-.463.85-.693a11.342 11.342 0 003.639-8.464c.01-.814-.103-1.662-.197-2.218zm-5.336 8.195s0-8.291.275-8.29c.213 0 .49 10.695.49 10.695-.381-.045-.765-1.76-.765-2.405z"></path></symbol>
+    <symbol id="lg-hf" viewBox="0 0 24 24"><path d="M1.4446 11.5059c0 1.1021.1673 2.1585.4847 3.1563-.0378-.0028-.0691-.0058-.1058-.0058-.4209 0-.8015.16-1.0704.4512-.3454.3737-.4984.8335-.4316 1.293a1.576 1.576 0 0 0 .2148.5978c-.2319.1864-.4018.4456-.4844.7578-.0646.2448-.131.7543.2149 1.2794a1.4552 1.4552 0 0 0-.0625.1055c-.208.3923-.2207.8372-.0371 1.25.2783.6258.9696 1.1175 2.3126 1.6467.8356.3292 1.5988.5411 1.6056.543 1.1046.2847 2.104.4277 2.969.4277 1.4173 0 2.4754-.3849 3.1525-1.1446 1.538.2651 2.791.1403 3.592.006.6773.7555 1.7332 1.1387 3.1467 1.1387.8649 0 1.8643-.143 2.969-.4278.0068-.0019.77-.2138 1.6056-.543 1.343-.5292 2.0343-1.0208 2.3126-1.6466.1836-.4129.171-.8577-.037-1.25a1.4685 1.4685 0 0 0-.0626-.1056c.346-.525.2795-1.0346.2149-1.2793-.0826-.3122-.2525-.5714-.4844-.7579.11-.1816.1831-.3788.2148-.5977.0669-.4595-.0862-.9193-.4316-1.293-.2688-.2913-.6495-.4513-1.0704-.4513-.0209 0-.0376.0008-.0588.0018.3162-.9966.4846-2.0518.4846-3.1523 0-5.807-4.7362-10.5144-10.5789-10.5144-5.8426 0-10.5788 4.7073-10.5788 10.5144Zm10.5788-9.4831c5.2727 0 9.5476 4.246 9.5476 9.483a9.4201 9.4201 0 0 1-.2696 2.2365c-.0039-.0047-.0079-.011-.0117-.0156-.274-.3255-.6679-.5059-1.1075-.5059-.352 0-.714.1155-1.0763.3438-.2403.1517-.5058.422-.7793.7598-.2534-.3492-.608-.5832-1.0137-.6465a1.5174 1.5174 0 0 0-.2344-.0176c-.9263 0-1.4828.7993-1.6935 1.5177-.1046.2426-.6065 1.3482-1.3614 2.0978-1.1681 1.1601-1.4458 2.3534-.8396 3.6382-.843.1029-1.5836.0927-2.365-.006.5906-1.212.3626-2.4388-.8426-3.6322-.755-.7496-1.2568-1.8552-1.3614-2.0978-.2107-.7184-.7673-1.5177-1.6935-1.5177-.078 0-.1568.0054-.2344.0176-.4057.0633-.7604.2973-1.0137.6465-.2735-.3379-.539-.6081-.7794-.7598-.3622-.2283-.7243-.3438-1.0762-.3438-.4266 0-.8094.171-1.0821.4786a9.4208 9.4208 0 0 1-.2598-2.1936c0-5.237 4.2749-9.483 9.5475-9.483zM8.6443 7.0036c-.4838.0043-.9503.2667-1.1934.7227-.3536.6633-.1006 1.4873.5645 1.84.351.1862.4883-.5261.836-.6485.3107-.1095.841.399 1.0078.086.3536-.6634.1025-1.4874-.5625-1.84a1.3659 1.3659 0 0 0-.6524-.1602Zm6.8403 0c-.2199-.002-.4426.05-.6504.1602-.665.3526-.9181 1.1766-.5645 1.84.1669.313.6971-.1955 1.0079-.086.3476.1224.4867.8347.838.6485.6649-.3527.916-1.1767.5624-1.84-.243-.456-.7096-.7184-1.1934-.7227Zm-9.7565 1.418a.8768.8768 0 0 0-.877.877c0 .4846.3925.877.877.877a.8768.8768 0 0 0 .877-.877.8768.8768 0 0 0-.877-.877zm12.6434 0c-.4845 0-.879.3925-.879.877 0 .4846.3945.877.879.877a.8768.8768 0 0 0 .877-.877.8768.8768 0 0 0-.877-.877zM8.7927 11.459c-.179-.003-.2793.1107-.2793.416 0 .8097.3874 2.125 1.4279 2.924.207-.7123 1.3453-1.2832 1.5079-1.2012.2315.1167.2191.4417.6074.7266.3884-.285.374-.6098.6056-.7266.1627-.082 1.3009.4889 1.5079 1.2012 1.0404-.799 1.4278-2.1144 1.4278-2.924 0-1.2212-1.583.6402-3.5413.6485-1.4686-.0061-2.7266-1.0558-3.2639-1.0645zM4.312 14.4768c.5792.365 1.6964 2.2751 2.1056 3.0177.1371.2488.371.3536.582.3536.4188 0 .7465-.4138.0391-.9395-1.0636-.791-.6914-2.0846-.1836-2.1642a.4302.4302 0 0 1 .0664-.004c.4616 0 .666.7892.666.7892s.5959 1.4898 1.6213 2.508c.942.9356 1.062 1.703.4961 2.6661-.0164-.004-.0159.0236-.1484.2149-.1853.2673-.4322.4688-.7188.6152-.5062.2269-1.1397.2696-1.7833.2696-1.037 0-2.1017-.1824-2.6975-.336-.0293-.0075-3.6505-.9567-3.1916-1.8224.0771-.1454.2033-.2031.3633-.2031.6463 0 1.823.9551 2.3283.9551.113 0 .196-.0865.2285-.2031.2249-.8045-3.2787-1.0522-2.9846-2.1642.0519-.1967.193-.2757.3907-.2754.854 0 2.7704 1.4923 3.172 1.4923.0307 0 .0525-.0085.0645-.0274.2012-.3227.1096-.5865-1.3087-1.4395-1.4182-.8533-2.4315-1.329-1.8653-1.9416.0651-.0707.1574-.1015.2695-.1015.8611.0002 2.8948 1.84 2.8948 1.84s.5487.5683.8809.5683c.0762 0 .1416-.0315.1855-.1054.2355-.3946-2.1858-2.2183-2.3224-2.971-.0926-.51.0641-.7676.3555-.7676-.0006.008.1701-.0285.4942.1759zm16.2257.5918c-.1366.7526-2.5579 2.5764-2.3224 2.9709.044.074.1092.1055.1855.1055.3321 0 .881-.5684.881-.5684s2.0336-1.8397 2.8947-1.84c.1121 0 .2044.0308.2695.1016.5662.6125-.447 1.0882-1.8653 1.9415-1.4183.853-1.51 1.1168-1.3087 1.4396.012.0188.0337.0273.0644.0273.4016 0 2.3181-1.4923 3.1721-1.4923.1977-.0002.3388.0787.3907.2754.294 1.112-3.2095 1.3597-2.9846 2.1642.0325.1166.1156.2032.2285.2032.5054 0 1.682-.9552 2.3283-.9552.16 0 .2862.0577.3633.2032.459.8656-3.1623 1.8149-3.1916 1.8224-.5958.1535-1.6605.336-2.6975.336-.6351 0-1.261-.0409-1.7638-.2599-.2949-.1472-.5488-.3516-.7383-.625-.0411-.0682-.1026-.1476-.1426-.205-.5726-.9679-.455-1.7371.4903-2.676 1.0254-1.0182 1.6212-2.508 1.6212-2.508s.2044-.7891.666-.7891a.4318.4318 0 0 1 .0665.0039c.5078.0796.88 1.3732-.1836 2.1642-.7074.5257-.3797.9395.039.9395.211 0 .445-.1047.5821-.3535.4092-.7426 1.5264-2.6527 2.1056-3.0178.5588-.3524.99-.1816.8497.5918z"></path></symbol>
+    <symbol id="lg-whisper" viewBox="0 0 24 24"><rect x="2" y="9" width="2.4" height="6" rx="1.2"></rect><rect x="6.5" y="6" width="2.4" height="12" rx="1.2"></rect><rect x="11" y="3" width="2.4" height="18" rx="1.2"></rect><rect x="15.5" y="6" width="2.4" height="12" rx="1.2"></rect><rect x="20" y="8.5" width="2.4" height="7" rx="1.2"></rect></symbol>
+    <symbol id="ic-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0h-2a5 5 0 0 1-10 0zm6 7.9V22h2v-3.1z"></path></symbol>
+    <symbol id="ic-ai" viewBox="0 0 24 24"><path d="M11 2l1.7 6.1L19 10l-6.3 1.9L11 18l-1.7-6.1L3 10l6.3-1.9z"></path><path d="M18.4 13l.7 2.6 2.6.7-2.6.7-.7 2.6-.7-2.6-2.6-.7 2.6-.7z"></path></symbol>
+    <symbol id="ic-stack" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="3.6" rx="1.8"></rect><rect x="4" y="10.2" width="16" height="3.6" rx="1.8"></rect><rect x="4" y="16.4" width="16" height="3.6" rx="1.8"></rect></symbol>
   </svg>
 
   <div class="poster">
 
-    <!-- ===================== HEADER ===================== -->
-    <header class="header">
-      <div class="header-main">
-        <div class="institution">המרכז האקדמי רופין · המחלקה למדעי המחשב</div>
-        <div class="project-title-he">מעטפת טקסט-לדיבור ודיבור-לטקסט לרובוטים וירטואליים ופיזיים משופרים באמצעות בינה מלאכותית גנרטיבית</div>
-        <div class="project-title-en">TTS &amp; STT Wrapper for Virtual and Physical Robots Enhanced by GenAI</div>
-        <div class="meta-row">
-          <div><span class="label">התמחות:</span> פיתוח מערכות תוכנה</div>
-          <div><span class="label">מנחה אקדמית:</span> ד"ר רינה צביאל-גירשין</div>
-          <div><span class="label">פרויקט מס':</span> 9 · תשפ"ו (2025–2026)</div>
-          <div><span class="label">סטודנטים:</span> נבו יפלח · ליאל ירדני · אדיר בן דיין</div>
+    <!-- ============================ HERO ============================ -->
+    <header class="hero">
+      <div class="hero-main">
+        <div class="brand"><span class="dot"></span>המרכז האקדמי רופין · המחלקה למדעי המחשב</div>
+
+        <h1 class="headline">קול חכם,<br><span class="learn">זיכרון שלומד.</span></h1>
+
+        <div class="project-title">
+          מעטפת קול (TTS/STT) לרובוטים וירטואליים ופיזיים, משופרת בבינה מלאכותית גנרטיבית
+          <span class="en">TTS &amp; STT Wrapper for Virtual &amp; Physical Robots, Enhanced by GenAI</span>
+        </div>
+
+        <div class="flow" aria-hidden="true">
+          <div class="fnode"><svg class="fic"><use href="#ic-mic"></use></svg>שואלים בקול</div>
+          <svg class="farr" viewBox="0 0 24 24"><path d="M16 5l-7 7 7 7"></path></svg>
+          <div class="fnode"><svg class="fic"><use href="#ic-ai"></use></svg>AI עונה · RAG</div>
+          <svg class="farr" viewBox="0 0 24 24"><path d="M16 5l-7 7 7 7"></path></svg>
+          <div class="fnode"><svg class="fic"><use href="#thumb"></use></svg>מדרגים</div>
+          <svg class="farr" viewBox="0 0 24 24"><path d="M16 5l-7 7 7 7"></path></svg>
+          <div class="fnode"><svg class="fic"><use href="#ic-stack"></use></svg>לומד וזוכר</div>
+        </div>
+
+        <div class="meta">
+          <div><span class="k">סטודנטים</span>נבו יפלח · ליאל ירדני · אדיר בן דיין</div>
+          <div><span class="k">מנחה</span>ד"ר רינה צביאל-גירשין</div>
+          <div><span class="k">התמחות</span>פיתוח מערכות תוכנה</div>
+          <div><span class="k">פרויקט</span>9 · תשפ"ו</div>
         </div>
       </div>
-      <div class="header-qr">
-        <img src="qr-live.svg" alt="QR לאפליקציה">
-        <span>סרקו לאפליקציה</span>
+
+      <div class="hero-rail">
+        <div>
+          <div class="qr"><img src="qr-live.svg" alt="קוד QR להדגמה חיה של המערכת"></div>
+          <span class="qr-cap">סרקו להדגמה חיה</span>
+        </div>
+        <div class="eq" aria-hidden="true">
+          <span style="height:40%"></span><span style="height:72%"></span><span style="height:55%"></span>
+          <span style="height:96%"></span><span style="height:64%"></span><span style="height:84%"></span>
+          <span style="height:46%"></span><span style="height:70%"></span><span style="height:34%"></span>
+        </div>
       </div>
     </header>
 
-    <!-- ===================== 1. רקע ומוטיבציה ===================== -->
-    <section class="panel background">
-      <h2><span class="num">1</span>רקע ומוטיבציה</h2>
-      <p class="lead">רובוטים וסוכנים וירטואליים הופכים לחלק מחיי היומיום, אך האינטראקציה עִמם
-        עדיין מוגבלת לממשקים גרפיים או לתכנות מורכב.</p>
+    <!-- ===================== רקע ===================== -->
+    <section class="panel bg">
+      <div class="eyebrow">רקע ומוטיבציה</div>
+      <h2>מדברים — לא מקלידים</h2>
+      <p class="lead">רובוטים וסוכנים קוליים נכנסים לחיי היומיום, אך ההתאמה אליהם עדיין מורכבת.</p>
       <ul>
-        <li>הצורך באינטראקציה טבעית ב<strong>שפה מדוברת</strong> הולך וגובר — במיוחד עבור ילדים,
-          קשישים ובעלי מוגבלויות.</li>
         <li>מועמדים ללימודים זקוקים למענה <strong>מיידי, רב-לשוני וזמין 24/7</strong> על קבלה, מלגות ושכר לימוד.</li>
-        <li><strong>מוטיבציה:</strong> יועץ אקדמי קולי חכם ונגיש, כבסיס לפיתוח יישומים בחינוך,
-          בריאות ושירות לקוחות.</li>
+        <li><strong>המטרה:</strong> יועץ קולי נגיש לכולם — כולל ילדים, קשישים ובעלי מוגבלות.</li>
       </ul>
     </section>
 
-    <!-- ===================== 2. בעיה, דרישות, מטרות ===================== -->
-    <section class="panel problem">
-      <h2><span class="num">2</span>בעיה · דרישות · מטרות</h2>
+    <!-- ===================== בעיה ומטרה ===================== -->
+    <section class="panel goal">
+      <div class="eyebrow">הבעיה והמטרה</div>
+      <h2>זיכרון ארגוני שחסר ל-AI</h2>
       <ul>
-        <li><strong>בעיות:</strong> למודלי שפה אין "זיכרון ארגוני" (תשובות גנריות); שילוב STT+TTS+LLM מורכב;
-          למנהלים אין כלי בקרה על "מה שואלים מול מה עונים".</li>
-        <li><strong>דרישות (Use Cases):</strong> שאלה בקול/טקסט וקבלת הערכת התאמה; דירוג תשובה (חיובי/שלילי);
-          סקירה ואישור ידע שנלמד; צפייה בסטטיסטיקות.</li>
-        <li><strong>מטרות:</strong> מערכת E2E מאוחדת — דיבור + AI + זיכרון ארגוני נלמד, לוח בקרה ניהולי,
-          ותמיכה רב-לשונית (עברית/ערבית).</li>
+        <li><strong>הבעיה:</strong> למודלי שפה אין "זיכרון ארגוני" → תשובות גנריות. שילוב STT+TTS+LLM מורכב.</li>
+        <li><strong>המטרה:</strong> מערכת קצה-לקצה — דיבור + AI + זיכרון נלמד ומאומת, עם לוח בקרה ניהולי.</li>
       </ul>
     </section>
 
-    <!-- ===================== 3. ארכיטקטורה ותיאור המערכת ===================== -->
+    <!-- ===================== ארכיטקטורה ===================== -->
     <section class="panel arch">
-      <h2><span class="num">3</span>ארכיטקטורה ותיאור המערכת</h2>
-      <svg class="diagram" viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg">
-        <!-- boxes (LTR flow) -->
-        <rect class="diag-box" x="30"  y="60" width="250" height="90" rx="10"></rect>
-        <text class="diag-label" x="155" y="95"  text-anchor="middle">React / Vite Client</text>
-        <text class="diag-sub"   x="155" y="118" text-anchor="middle">Chat · Voice · Admin Dashboard</text>
+      <div class="eyebrow">המערכת</div>
+      <h2>ארכיטקטורת מיקרו-שירותים</h2>
+      <svg class="diagram" viewBox="0 0 1000 230" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="זרימת המערכת: React אל C# אל Python, ומסד MongoDB">
+        <!-- boxes -->
+        <rect class="diag-box"    x="30"  y="40" width="260" height="92" rx="12"></rect>
+        <text class="diag-title"  x="160" y="78"  text-anchor="middle">React / Vite</text>
+        <text class="diag-sub"    x="160" y="104" text-anchor="middle">chat · voice · admin</text>
 
-        <rect class="diag-box" x="375" y="60" width="250" height="90" rx="10"></rect>
-        <text class="diag-label" x="500" y="95"  text-anchor="middle">C# ASP.NET Core</text>
-        <text class="diag-sub"   x="500" y="118" text-anchor="middle">User · Chat · Admin · Learning</text>
+        <rect class="diag-box"    x="370" y="40" width="260" height="92" rx="12"></rect>
+        <text class="diag-title"  x="500" y="78"  text-anchor="middle">C# ASP.NET Core</text>
+        <text class="diag-sub"    x="500" y="104" text-anchor="middle">user · chat · learning</text>
 
-        <rect class="diag-box py" x="720" y="60" width="250" height="90" rx="10"></rect>
-        <text class="diag-label" x="845" y="95"  text-anchor="middle">Python Flask + OpenAI</text>
-        <text class="diag-sub"   x="845" y="118" text-anchor="middle">/chat · /distill · /embed</text>
+        <rect class="diag-box py" x="710" y="40" width="260" height="92" rx="12"></rect>
+        <text class="diag-title"  x="840" y="78"  text-anchor="middle">Python Flask + OpenAI</text>
+        <text class="diag-sub"    x="840" y="104" text-anchor="middle">/chat · /distill · /embed</text>
 
-        <rect class="diag-box db" x="375" y="195" width="250" height="45" rx="8"></rect>
-        <text class="diag-label" x="500" y="223" text-anchor="middle">MongoDB Atlas</text>
+        <rect class="diag-box db" x="370" y="172" width="260" height="44" rx="9"></rect>
+        <text class="diag-title"  x="500" y="200" text-anchor="middle">MongoDB Atlas</text>
 
         <!-- arrows -->
-        <line class="diag-arrow" x1="280" y1="105" x2="375" y2="105"></line>
-        <line class="diag-arrow" x1="625" y1="105" x2="720" y2="105"></line>
-        <line class="diag-arrow" x1="500" y1="150" x2="500" y2="195"></line>
-        <text class="diag-sub" x="327" y="95"  text-anchor="middle">REST</text>
-        <text class="diag-sub" x="672" y="95"  text-anchor="middle">HTTP</text>
+        <line class="diag-arrow" x1="290" y1="86" x2="370" y2="86"></line>
+        <line class="diag-arrow" x1="630" y1="86" x2="710" y2="86"></line>
+        <line class="diag-arrow" x1="500" y1="132" x2="500" y2="172"></line>
+        <text class="diag-tag" x="330" y="76" text-anchor="middle">REST</text>
+        <text class="diag-tag" x="670" y="76" text-anchor="middle">HTTP</text>
       </svg>
-      <ul>
-        <li><strong>מיקרו-שירותים:</strong> הפרדת C# (לוגיקה עסקית) מ-Python (LLM/Embeddings) → גמישות והחלפת ספקים.</li>
-        <li><strong>מודולים:</strong> ניהול משתמשים · צ'אט+RAG · דיבור (Whisper STT / TTS) · שירות למידה · לוח בקרה.</li>
-        <li><strong>משתמשים:</strong> מועמד/סטודנט · מנהל. <strong>אוספי נתונים:</strong>
-          users · chatSessions · ruppinKnowledge · learningCandidates · chatFeedback.</li>
-        <li><strong>מעטפת אגנוסטית לחומרה:</strong> כל רובוט (NAO · Pepper · Raspberry Pi · ROS) מתחבר ל-API ב-REST
-          (STT → Chat → TTS) דרך robot_client.py — וירטואלי ופיזי כאחד.</li>
-      </ul>
-    </section>
 
-    <!-- ===================== 4. האלמנט החכם ===================== -->
-    <section class="panel smart">
-      <h2><span class="num">4</span>האלמנט החכם — RAG שמשתפר עם הזמן</h2>
-      <svg class="diagram" viewBox="0 0 1000 130" xmlns="http://www.w3.org/2000/svg">
-        <g>
-          <rect class="loop-node" x="10"  y="40" width="150" height="50" rx="25"></rect>
-          <text class="loop-label" x="85"  y="70" text-anchor="middle">משוב חיובי</text>
-          <rect class="loop-node" x="225" y="40" width="150" height="50" rx="25"></rect>
-          <text class="loop-label" x="300" y="70" text-anchor="middle">זיקוק לעובדה</text>
-          <rect class="loop-node" x="440" y="40" width="150" height="50" rx="25"></rect>
-          <text class="loop-label" x="515" y="70" text-anchor="middle">ניתוב לפי ביטחון</text>
-          <rect class="loop-node" x="655" y="40" width="150" height="50" rx="25"></rect>
-          <text class="loop-label" x="730" y="70" text-anchor="middle">הוספה למאגר</text>
-          <rect class="loop-node" x="855" y="40" width="135" height="50" rx="25"></rect>
-          <text class="loop-label" x="922" y="70" text-anchor="middle">שליפה (RAG)</text>
-          <line class="diag-arrow" x1="160" y1="65" x2="225" y2="65"></line>
-          <line class="diag-arrow" x1="375" y1="65" x2="440" y2="65"></line>
-          <line class="diag-arrow" x1="590" y1="65" x2="655" y2="65"></line>
-          <line class="diag-arrow" x1="805" y1="65" x2="855" y2="65"></line>
-        </g>
-      </svg>
-      <ul>
-        <li><strong>RAG סמנטי:</strong> כל שאלה מומרת לוקטור (<strong>paraphrase-multilingual-MiniLM-L12-v2</strong>,
-          384 מימדים) ונשלפות 3 העובדות הקרובות ביותר לפי דמיון קוסינוס.</li>
-        <li><strong>לולאת למידה מבוקרת:</strong> משוב חיובי → זיקוק לעובדה כללית <strong>נטולת מידע אישי</strong> + ביטחון.
-          ניתוב היברידי: ≥0.90 נוסף אוטומטית · 0.60–0.90 לאישור מנהל · נמוך נדחה. בדיקת כפילות מונעת הצפה.</li>
-        <li><strong>שיפור מתמשך:</strong> ככל שמצטברות עובדות מאומתות — הדיוק והכיסוי של תשובות עתידיות עולים
-          (<strong>מאגר ידע חי</strong>, ללא כיוונון-עדין יקר).</li>
-        <li><strong>שליטה בקול ובסגנון:</strong> בחירת סגנון שיחה (ידידותי/רשמי → קול וטון) והתאמת קהל יעד —
-          מצב "פשוט ואיטי" (מילים פשוטות ודיבור איטי) לילדים, קשישים ונגישות. דיבור דו-כיווני: Whisper (STT) + TTS.</li>
-      </ul>
-    </section>
-
-    <!-- ===================== 5. מסכי המערכת ===================== -->
-    <section class="panel screens">
-      <h2><span class="num">5</span>מסכי המערכת</h2>
-      <div class="shots">
-        <figure class="shot"><img src="assets/chat-feedback.png" alt="צ'אט עם דירוג"><figcaption>צ'אט עם דירוג משוב</figcaption></figure>
-        <figure class="shot"><img src="assets/admin-learning.png" alt="תור למידה"><figcaption>לוח בקרה — תור למידה (אישור/דחייה)</figcaption></figure>
-        <figure class="shot"><img src="assets/chat-voice.png" alt="שיחה קולית"><figcaption>מצב שיחה קולית</figcaption></figure>
-        <figure class="shot"><img src="assets/admin-sessions.png" alt="סטטיסטיקות"><figcaption>לוח בקרה — שיחות וסטטיסטיקות</figcaption></figure>
+      <div class="arch-spec">
+        <span class="ak">משתמשים</span><span>מועמד/סטודנט · מנהל מערכת</span>
+        <span class="ak">מודולים</span><span>ניהול משתמשים · צ'אט + RAG · דיבור (STT/TTS) · שירות למידה · לוח בקרה</span>
+        <span class="ak">דרישות · Use&nbsp;Cases</span><span>שאלה בקול/טקסט · דירוג תשובה · אישור ידע שנלמד · צפייה בסטטיסטיקות</span>
+      </div>
+      <div class="arch-note">
+        <b>מעטפת אגנוסטית לחומרה:</b> כל רובוט (NAO · Pepper · Raspberry Pi · ROS) מתחבר ל-API ב-<code>robot_client.py</code> · הפרדת C#/Python מאפשרת החלפת ספקים.
       </div>
     </section>
 
-    <!-- ===================== 6. תוצאות ומסקנות ===================== -->
-    <section class="panel results">
-      <h2><span class="num">6</span>תוצאות ומסקנות</h2>
-      <div class="results-grid">
+    <!-- ===================== SIGNATURE: learning loop ===================== -->
+    <section class="loop">
+      <div class="loop-head">
         <div>
-          <div class="kpi-row">
-            <div class="kpi"><div class="num">2</div><div class="cap">שפות (he/ar)</div></div>
-            <div class="kpi"><div class="num">384</div><div class="cap">מימדי וקטור</div></div>
-            <div class="kpi"><div class="num">E2E</div><div class="cap">מערכת עובדת</div></div>
+          <div class="eyebrow">האלמנט החכם</div>
+          <h2>RAG שמשתפר בכל שיחה</h2>
+        </div>
+        <div class="gauge" aria-hidden="true">
+          <div class="gauge-cap">שער איכות אנושי · ניתוב לפי דמיון (cosine)</div>
+          <div class="gbar-wrap">
+            <div class="gbar">
+              <div class="gseg reject" style="flex:60">נדחה</div>
+              <div class="gseg review" style="flex:30">אישור מנהל</div>
+              <div class="gseg auto" style="flex:10">אוטומטי</div>
+            </div>
+            <span class="gtick" style="left:60%">0.60</span>
+            <span class="gtick" style="left:90%">0.90</span>
+          </div>
+        </div>
+      </div>
+
+      <svg class="loop-diagram" viewBox="0 0 1200 250" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="לולאת הלמידה: שיחה ומשוב, זיקוק לעובדה, שער ביטחון, מאגר ידע חי, שליפה — וחזרה">
+        <!-- return arc (RTL: from leftmost step 5 back up and over to rightmost step 1) -->
+        <path class="ln-return" d="M 110 150 C 110 35, 1090 35, 1090 150"></path>
+        <text class="ln-return-text" x="600" y="32" text-anchor="middle">כל סבב מרחיב את הזיכרון — מאגר ידע חי</text>
+
+        <!-- Station 1 (rightmost) -->
+        <g>
+          <rect class="ln-box" x="990" y="150" width="190" height="84" rx="14"></rect>
+          <circle class="ln-num" cx="1010" cy="150" r="17"></circle>
+          <text class="ln-numtext" x="1010" y="157" text-anchor="middle">1</text>
+          <use href="#thumb" x="1142" y="156" width="26" height="26" fill="#4FA12C"></use>
+          <text class="ln-title" x="1083" y="192" text-anchor="middle">שיחה</text>
+          <text class="ln-sub"   x="1083" y="216" text-anchor="middle">המשתמש מדרג תשובה</text>
+        </g>
+        <!-- Station 2 -->
+        <g>
+          <rect class="ln-box" x="755" y="150" width="190" height="84" rx="14"></rect>
+          <circle class="ln-num" cx="775" cy="150" r="17"></circle>
+          <text class="ln-numtext" x="775" y="157" text-anchor="middle">2</text>
+          <text class="ln-title" x="850" y="190" text-anchor="middle">זיקוק לעובדה</text>
+          <text class="ln-sub"   x="850" y="214" text-anchor="middle">נטולת מידע אישי</text>
+        </g>
+        <!-- Station 3 (gate, green, emphasized) -->
+        <g>
+          <rect class="ln-box gate" x="470" y="142" width="245" height="100" rx="16"></rect>
+          <circle class="ln-num gate" cx="492" cy="142" r="18"></circle>
+          <text class="ln-numtext" x="492" y="149" text-anchor="middle">3</text>
+          <text class="ln-title" x="592" y="184" text-anchor="middle">שער ביטחון</text>
+          <text class="ln-sub"   x="592" y="208" text-anchor="middle">אישור אנושי + אוטומטי</text>
+          <text class="ln-sub"   x="592" y="228" text-anchor="middle">בדיקת כפילות מונעת הצפה</text>
+        </g>
+        <!-- Station 4 -->
+        <g>
+          <rect class="ln-box" x="255" y="150" width="190" height="84" rx="14"></rect>
+          <circle class="ln-num" cx="275" cy="150" r="17"></circle>
+          <text class="ln-numtext" x="275" y="157" text-anchor="middle">4</text>
+          <text class="ln-title" x="350" y="190" text-anchor="middle">מאגר ידע חי</text>
+          <text class="ln-sub"   x="350" y="214" text-anchor="middle">עובדה מאומתת נוספת</text>
+        </g>
+        <!-- Station 5 (leftmost) -->
+        <g>
+          <rect class="ln-box" x="20" y="150" width="190" height="84" rx="14"></rect>
+          <circle class="ln-num" cx="40" cy="150" r="17"></circle>
+          <text class="ln-numtext" x="40" y="157" text-anchor="middle">5</text>
+          <text class="ln-title" x="115" y="190" text-anchor="middle">שליפה (RAG)</text>
+          <text class="ln-sub"   x="115" y="214" text-anchor="middle">בתשובה הבאה</text>
+        </g>
+
+        <!-- arrows (RTL: high-x → low-x) -->
+        <line class="ln-arrow" x1="988" y1="192" x2="947" y2="192"></line>
+        <line class="ln-arrow" x1="753" y1="192" x2="717" y2="192"></line>
+        <line class="ln-arrow" x1="468" y1="192" x2="447" y2="192"></line>
+        <line class="ln-arrow" x1="253" y1="192" x2="212" y2="192"></line>
+      </svg>
+    </section>
+
+    <!-- ===================== מסכים ===================== -->
+    <section class="panel screens">
+      <div class="eyebrow">מסכי המערכת</div>
+      <h2>מהשיחה ועד שער הלמידה</h2>
+      <div class="shots">
+        <figure class="shot"><div class="bar"></div><img src="assets/chat-voice.png" alt="מסך שיחה קולית"><figcaption>שיחה קולית</figcaption></figure>
+        <figure class="shot"><div class="bar"></div><img src="assets/chat-feedback.png" alt="צ'אט עם דירוג"><figcaption>צ'אט + דירוג <svg class="ic" aria-hidden="true"><use href="#thumb"></use></svg><svg class="ic down" aria-hidden="true"><use href="#thumb"></use></svg></figcaption></figure>
+        <figure class="shot"><div class="bar"></div><img src="assets/admin-learning.png" alt="תור למידה בלוח הבקרה"><figcaption>תור למידה · אישור אנושי</figcaption></figure>
+        <figure class="shot"><div class="bar"></div><img src="assets/admin-sessions.png" alt="לוח בקרה לשיחות"><figcaption>לוח בקרה · שיחות</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ===================== תוצאות ומסקנות ===================== -->
+    <section class="panel results">
+      <div class="eyebrow">תוצאות ומסקנות</div>
+      <h2>ידע שמצטבר — שירות שמשתפר</h2>
+      <div class="results-grid">
+        <div class="example">
+          <div class="ex-head">דוגמה אמיתית מהמערכת</div>
+          <div class="ex-body">
+            <div class="bubble q"><span class="who">מועמד</span>מה שכר הלימוד לתואר במדעי המחשב?</div>
+            <div class="bubble a"><span class="who">היועץ · דורג חיובי <svg class="ic" aria-hidden="true"><use href="#thumb"></use></svg></span>שכר הלימוד הבסיסי לתואר ראשון מלא בתשפ"ו הוא כ-12,017 ₪.</div>
+            <span class="learned-tag">✓ נלמדה עובדה מאומתת — מופיעה בתשובה הבאה</span>
+          </div>
+        </div>
+        <div class="outcomes">
+          <h3>מה נבנה</h3>
+          <div class="chips">
+            <span>צ'אט קולי רב-לשוני</span><span>RAG סמנטי</span><span>לולאת למידה מבוקרת</span><span>לוח בקרה</span>
           </div>
           <ul>
-            <li><strong>תוצרים:</strong> צ'אט קולי רב-לשוני + RAG + לולאת למידה מבוקרת + לוח ניהול.</li>
-            <li><strong>מדדים מוצעים:</strong> זמן תגובה · מס' עובדות שנלמדו/אושרו · אחוז משוב חיובי · גידול המאגר לאורך זמן.</li>
+            <li>"זיכרון ארגוני" שמשתפר <strong>ללא fine-tuning יקר</strong> — RAG + שער איכות אנושי.</li>
+            <li>הפרדה למיקרו-שירותים הקלה על שילוב הדיבור וה-LLM והחלפת ספקים.</li>
+            <li>דירוג <svg class="ic" aria-hidden="true"><use href="#thumb"></use></svg><svg class="ic down" aria-hidden="true"><use href="#thumb"></use></svg> הוא אות איכות פשוט ויעיל להזנת לולאת הלמידה.</li>
           </ul>
         </div>
-        <div>
-          <p><strong>מסקנות:</strong></p>
-          <ul>
-            <li>ניתן להשיג "זיכרון ארגוני" שמשתפר ללא fine-tuning יקר — באמצעות RAG + <strong>שער איכות אנושי</strong>.</li>
-            <li>הפרדה למיקרו-שירותים הקלה על שילוב טכנולוגיות הדיבור וה-LLM והחלפת ספקים.</li>
-            <li>דירוג משתמשים (חיובי/שלילי) הוא אות איכות פשוט ויעיל להזנת לולאת הלמידה.</li>
-          </ul>
-        </div>
+        <figure class="growth-fig">
+          <div class="growth-title">מאגר ידע חי</div>
+          <svg class="growth" viewBox="0 0 320 150" role="img" aria-label="המחשה: מאגר הידע גדל לאורך זמן">
+            <line class="g-axis" x1="46" y1="18" x2="46" y2="120"></line>
+            <line class="g-axis" x1="46" y1="120" x2="314" y2="120"></line>
+            <path class="g-area" d="M46 120 C 130 116, 205 92, 314 32 L314 120 Z"></path>
+            <path class="g-line" d="M46 120 C 130 116, 205 92, 314 32"></path>
+            <circle class="g-dot" cx="120" cy="113" r="4"></circle>
+            <circle class="g-dot" cx="205" cy="92" r="4"></circle>
+            <circle class="g-dot" cx="290" cy="46" r="4"></circle>
+            <text class="g-lab" x="180" y="141" text-anchor="middle">זמן →</text>
+            <text class="g-lab" x="22" y="69" text-anchor="middle" transform="rotate(-90 22 69)">עובדות מאומתות</text>
+          </svg>
+          <figcaption>המחשה — גדל ככל שמצטבר משוב מאומת</figcaption>
+        </figure>
       </div>
     </section>
 
     <!-- ===================== FOOTER ===================== -->
     <footer class="footer">
       <div class="stack">
-        <span>React</span><span>Vite</span><span>C# ASP.NET Core</span><span>Python Flask</span>
-        <span>OpenAI GPT</span><span>Whisper STT/TTS</span><span>MongoDB Atlas</span><span>sentence-transformers RAG</span>
+        <span><svg class="lg lg--react" aria-hidden="true"><use href="#lg-react"></use></svg>React</span><span><svg class="lg lg--vite" aria-hidden="true"><use href="#lg-vite"></use></svg>Vite</span><span><svg class="lg lg--dotnet" aria-hidden="true"><use href="#lg-dotnet"></use></svg>C# ASP.NET Core</span><span><svg class="lg lg--python" aria-hidden="true"><use href="#lg-python"></use></svg>Python Flask</span>
+        <span><svg class="lg lg--openai" aria-hidden="true"><use href="#lg-openai"></use></svg>OpenAI GPT</span><span><svg class="lg lg--whisper" aria-hidden="true"><use href="#lg-whisper"></use></svg>Whisper STT/TTS</span><span><svg class="lg lg--mongodb" aria-hidden="true"><use href="#lg-mongodb"></use></svg>MongoDB Atlas</span><span><svg class="lg lg--hf" aria-hidden="true"><use href="#lg-hf"></use></svg>sentence-transformers</span>
       </div>
     </footer>
 
